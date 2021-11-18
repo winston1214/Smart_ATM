@@ -46,7 +46,8 @@ def outlier_iqr(data):
     return q2, q3, upper_bound
 
 @torch.no_grad()
-def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
+def run(id=0,
+        weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         source=ROOT / 'data/images',  # file/dir/URL/glob, 0 for webcam
         imgsz=640,  # inference size (pixels)
         conf_thres=0.25,  # confidence threshold
@@ -128,9 +129,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     #점수
     score = pd.DataFrame(index=range(0,1), columns = ['account','loan','insurance','card_short','card_long'])
     score.loc[0] = 1
-    
-    # id 변경
-    id = 101
 
     #여수신정보 계좌정보
     account_past_id = account_past[(account_past['id']==id) & (account_past['type']==1) & (account_past['class']==2)]
@@ -429,6 +427,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--id', type=int, default=0, help='ID number')
     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model path(s)')
     parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
