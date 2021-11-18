@@ -40,7 +40,16 @@ from facial_recognition.facial_model import Facial_model
 import torch
 
 account =  loan = insurance = card_short = card_long = 1
-mydata_score = 0
+mydata_weights =  0
+
+account_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.09.01~2021.10.30)')
+account_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.10.31)')
+loan_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2020.10.31~2021.10.28)')
+loan_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2021.10.29~2021.10.31)')
+insurance_past = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2020.10.31~2021.10.28)')
+insurance_today = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2021.10.29~2021.10.31)')
+card_past = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2020.10.31~2021.10.28)')
+card_today = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2021.10.29~2021.10.31)') 
 
 def outlier_iqr(data):
     q1, q2, q3 = np.percentile(data,[25,50,75])
@@ -50,15 +59,6 @@ def outlier_iqr(data):
     
     return q2, q3, upper_bound
 
-def load_mydata():
-    account_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.09.01~2021.10.30)')
-    account_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.10.31)')
-    loan_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2020.10.31~2021.10.28)')
-    loan_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2021.10.29~2021.10.31)')
-    insurance_past = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2020.10.31~2021.10.28)')
-    insurance_today = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2021.10.29~2021.10.31)')
-    card_past = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2020.10.31~2021.10.28)')
-    card_today = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2021.10.29~2021.10.31)') 
 
 def account_data():
     account_past_id = account_past[(account_past['id']==id) & (account_past['type']==1) & (account_past['class']==2)]
@@ -245,8 +245,6 @@ def run(id=0,
     calling_weights = 0
     calling = False
     face_weights = 0
-
-    load_mydata() #마이데이터 로드
     
     account_data()  #여수신계좌정보
     loan_data() #여수신대출정보
@@ -254,7 +252,7 @@ def run(id=0,
     card_short_loan() #카드단기대출정보
     card_long_loan() #카드장기대출정보
  
-    mydata_score = account +  loan + insurance + card_short + card_long  #금융데이터 점수
+    mydata_weights = 0.4 * (account +  loan + insurance + card_short + card_long)  #금융데이터 점수
 
     for path, im, im0s, vid_cap, s in dataset:
         t1 = time_sync()
@@ -433,7 +431,7 @@ def run(id=0,
                 
                 if calling : calling_weights = 0.3
                 
-            danger_score = sum([calling_weights,face_weights,mydata_score]) # 여기에 점수 변수 넣어줘
+            danger_score = sum([calling_weights,face_weights,mydata_weights]) # 여기에 점수 변수 넣어줘
             print(danger_score)
             # cv2.putText(im0,f'위험도 {np.sum()}')
             # Print time (inference-only)
