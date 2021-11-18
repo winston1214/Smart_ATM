@@ -20,7 +20,7 @@ import numpy as np
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
-
+import pandas as pd
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -35,6 +35,13 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 
+def outlier_iqr(data):
+    q1, q2, q3 = np.percentile(data,[25,50,75])
+    iqr = q3 - q1
+    lower_bound = q1 - (iqr*1.5)
+    upper_bound = q3 + (iqr*1.5)
+    
+    return q2, q3, upper_bound
 
 @torch.no_grad()
 def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
@@ -105,6 +112,43 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     call_check = 0
     call_hand = []
     call_hand_loc = ''
+
+    account_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.09.01~2021.10.30)')
+    account_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.10.31)')
+    loan_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2020.10.31~2021.10.28)')
+    loan_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2021.10.29~2021.10.31)')
+    insurance_past = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2020.10.31~2021.10.28)')
+    insurance_today = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2021.10.29~2021.10.31)')
+    card_past = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2020.10.31~2021.10.28)')
+    card_today = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2021.10.29~2021.10.31)')
+
+    #점수
+    score = pd.DataFrame(index=range(0,1), columns = ['여수신계좌정보','여수신대출정보','보험대출정보','카드단기대출정보','카드장기대출정보'])
+    score.loc[0] = 1
+    
+    # id 변경
+    id = 101
+
+    #여수신정보 계좌정보
+    account_past_id = account_past[(account_past['고유번호']==id) & (account_past['거래유형']==1) & (account_past['거래구분']==2)]
+    account_today_id = account_today[(account_today['고유번호']==id) & (account_today['거래유형']==1) & (account_today['거래구분']==2)]
+
+    #여수신계좌정보 점수
+    if len(account_today_id) == 0:
+        score['여수신계좌정보'][0] = 0
+    else:
+        if any(account_today_id['거래금액'] > outlier_iqr(account_past_id['거래금액'])[2]):
+            score['여수신계좌정보'][0] = 0.3
+        if score['여수신계좌정보'][0] == 1:
+            if any(outlier_iqr(account_past_id['거래금액'])[1] < account_today_id['거래금액']):
+                if any(account_today_id['거래금액'] < outlier_iqr(account_past_id['거래금액'])[2]):
+                    score['여수신계좌정보'][0] = 0.2
+            if any(outlier_iqr(account_past_id['거래금액'])[0] < account_today_id['거래금액']):
+                if any(account_today_id['거래금액'] < outlier_iqr(account_past_id['거래금액'])[1]):
+                    score['여수신계좌정보'][0] = 0.1
+            else:
+                score['여수신계좌정보'][0] = 0
+
     for path, im, im0s, vid_cap, s in dataset:
         t1 = time_sync()
         im = torch.from_numpy(im).to(device)
@@ -287,6 +331,84 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             save_path += '.mp4'
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
+
+    # 여수신대출정보
+    loan_past_id = loan_past[loan_past['대출차주명(고유번호)']==id]
+    loan_today_id = loan_today[loan_today['대출차주명(고유번호)']==id]
+
+    # 여수신대출정보 점수
+    if len(loan_today_id) == 0:
+        score['여수신대출정보'][0] = 0
+    else:
+        if any(loan_today_id['대출원금'] > outlier_iqr(loan_past_id['대출원금'])[2]):
+            score['여수신대출정보'][0] = 0.2
+        if score['여수신대출정보'][0] == 1:
+            if any(outlier_iqr(loan_past_id['대출원금'])[1] < loan_today_id['대출원금']):
+                if any(loan_today_id['대출원금'] < outlier_iqr(loan_past_id['대출원금'])[2]):
+                    score['여수신대출정보'][0] = 0.1
+            if any(outlier_iqr(loan_past_id['대출원금'])[0] < loan_today_id['대출원금']):
+                if any(loan_today_id['대출원금'] < outlier_iqr(loan_past_id['대출원금'])[1]):
+                    score['여수신대출정보'][0] = 0.05
+            else:
+                score['여수신대출정보'][0] = 0
+    
+    # 보험대출정보
+    insurance_past_id = insurance_past[insurance_past['고유번호']==id]
+    insurance_today_id = insurance_today[insurance_today['고유번호']==id]
+
+    # 보험대출정보 점수
+    if len(insurance_today_id) == 0:
+        score['보험대출정보'][0] = 0
+    else:
+        if any(insurance_today_id['대출원금'] > outlier_iqr(insurance_past_id['대출원금'])[2]):
+            score['보험대출정보'][0] = 0.2
+        if score['보험대출정보'][0] == 1:
+            if any(outlier_iqr(insurance_past_id['대출원금'])[1] < insurance_today_id['대출원금']):
+                if any(insurance_today_id['대출원금'] < outlier_iqr(insurance_past_id['대출원금'])[2]):
+                    score['보험대출정보'][0] = 0.1
+            if any(outlier_iqr(insurance_past_id['대출원금'])[0] < insurance_today_id['대출원금']):
+                if any(insurance_today_id['대출원금'] < outlier_iqr(insurance_past_id['대출원금'])[1]):
+                    score['보험대출정보'][0] = 0.05
+            else:
+                score['보험대출정보'][0] = 0
+    
+    #카드 대출정보
+    card_past_short_id = card_past[(card_past['고유번호']==id) & (card_past['단기대출여부']== True)]
+    card_today_short_id = card_today[(card_today['고유번호']==id) & (card_past['단기대출여부']== True)]
+
+    card_past_long_id = card_past[(card_past['고유번호']==id) & (card_past['장기대출여부']== True)]
+    card_today_long_id = card_today[(card_today['고유번호']==id) & (card_past['장기대출여부']== True)]
+
+    #카드 대출정보 점수
+    if len(card_today_short_id) == 0:
+        score['카드단기대출정보'][0] = 0
+    else:
+        if any(card_today_short_id['단기대출이용금액'] > outlier_iqr(card_past_short_id['단기대출이용금액'])[2]):
+            score['카드단기대출정보'][0] = 0.15
+        if score['카드단기대출정보'][0] == 1:
+            if any(outlier_iqr(card_past_short_id['단기대출이용금액'])[1] < card_today_short_id['단기대출이용금액']):
+                if any(card_today_short_id['단기대출이용금액'] < outlier_iqr(card_past_short_id['단기대출이용금액'])[2]):
+                    score['카드단기대출정보'][0] = 0.1
+            if any(outlier_iqr(card_past_short_id['단기대출이용금액'])[0] < card_today_short_id['단기대출이용금액']):
+                if any(card_today_short_id['단기대출이용금액'] < outlier_iqr(card_past_short_id['단기대출이용금액'])[1]):
+                    score['카드단기대출정보'][0] = 0.05
+            else:
+                score['카드단기대출정보'][0] = 0
+
+    if len(card_today_long_id) == 0:
+        score['카드장기대출정보'][0] = 0
+    else:
+        if any(card_today_long_id['장기대출이용금액'] > outlier_iqr(card_past_long_id['장기대출이용금액'])[2]):
+            score['카드장기대출정보'][0] = 0.15
+        if score['카드장기대출정보'][0] == 1:
+            if any(outlier_iqr(card_past_long_id['장기대출이용금액'])[1] < card_today_long_id['장기대출이용금액']):
+                if any(card_today_long_id['장기대출이용금액'] < outlier_iqr(card_past_long_id['장기대출이용금액'])[2]):
+                    score['카드장기대출정보'][0] = 0.1
+            if any(outlier_iqr(card_past_long_id['장기대출이용금액'])[0] < card_today_long_id['장기대출이용금액']):
+                if any(card_today_long_id['장기대출이용금액'] < outlier_iqr(card_past_long_id['장기대출이용금액'])[1]):
+                    score['카드장기대출정보'][0] = 0.05
+            else:
+                score['카드장기대출정보'][0] = 0
 
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
