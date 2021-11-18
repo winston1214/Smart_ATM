@@ -36,6 +36,8 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
                            increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
+from facial_recognition.facial_model import Facial_model
+import torch
 
 def outlier_iqr(data):
     q1, q2, q3 = np.percentile(data,[25,50,75])
@@ -115,6 +117,9 @@ def run(id=0,
     call_check = 0
     call_hand = []
     call_hand_loc = ''
+    calling_weights = 0
+    calling = False
+    facial = True
 
     #금융데이터
     account_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.09.01~2021.10.30)')
@@ -245,15 +250,16 @@ def run(id=0,
                             call_hand_loc = 'right'
                             hand_left_x = sorted(hand_left_x)[-1]
                             hand_right_x = sorted(hand_right_x)[-1]
-                    print(hand_left_x)
-                    print('mask',mask_left_x)
+
                     if mask_left_x > hand_left_x: # 영상의 왼쪽에서 전화 받음
                         call_hand.append('left')
                         if mask_left_x < hand_right_x < mask_right_x:
                             call_check += 1
-                            if call_check >= 30:
+                            if call_check >= 20:
                                 cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling = True
+                                
                     
                     if mask_right_x < hand_right_x: # 영상의 오른쪽에서 전화 받음
                         call_hand.append('right')
@@ -262,6 +268,8 @@ def run(id=0,
                             if call_check >= 20:
                                 cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling_weights = 0.3
+                                calling = True
                         
                             
 
@@ -274,6 +282,8 @@ def run(id=0,
                     face_xyxy = list(filter(lambda x: x[-1] == 'face',frame_ls))
                     face_xyxy = list(map(lambda x: x[:-1],face_xyxy))
                     face_left_x ,face_right_x = np.array(face_xyxy)[:,0],np.array(face_xyxy)[:,2]
+
+                    crop = save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True,save = False)
 
                     if len(hand_left_x) >1: # 손이 두개 나올 때 왼손 오른손 구분
                         if call_hand.count('left')>call_hand.count('right'):
@@ -291,18 +301,25 @@ def run(id=0,
                             call_check += 1
                             if call_check >= 20:
                                 cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling = True
                     if face_right_x < hand_right_x:
                         call_hand.append('right')
                         if face_left_x <= hand_left_x <= face_right_x:
                             call_check += 1
                             if call_check >= 20:
                                 cv2.putText(im0,'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling = True
+                    
+
 
                 if 'hand' not in label_ls:
                     call_check = 0
+                    calling = False
 
                 if len(call_hand) >= 1000:
                     call_hand.pop()
+                
+                if calling : calling_weights = 0.3
 
 
             # Print time (inference-only)
