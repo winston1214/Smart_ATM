@@ -21,6 +21,8 @@ import cv2
 import torch
 import torch.backends.cudnn as cudnn
 import pandas as pd
+import warnings
+warnings.filterwarnings(action='ignore')
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -124,31 +126,31 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     card_today = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2021.10.29~2021.10.31)')
 
     #점수
-    score = pd.DataFrame(index=range(0,1), columns = ['여수신계좌정보','여수신대출정보','보험대출정보','카드단기대출정보','카드장기대출정보'])
+    score = pd.DataFrame(index=range(0,1), columns = ['account','loan','insurance','card_short','card_long'])
     score.loc[0] = 1
     
     # id 변경
     id = 101
 
     #여수신정보 계좌정보
-    account_past_id = account_past[(account_past['고유번호']==id) & (account_past['거래유형']==1) & (account_past['거래구분']==2)]
-    account_today_id = account_today[(account_today['고유번호']==id) & (account_today['거래유형']==1) & (account_today['거래구분']==2)]
+    account_past_id = account_past[(account_past['id']==id) & (account_past['type']==1) & (account_past['class']==2)]
+    account_today_id = account_today[(account_today['id']==id) & (account_today['type']==1) & (account_today['class']==2)]
 
     #여수신계좌정보 점수
     if len(account_today_id) == 0:
-        score['여수신계좌정보'][0] = 0
+        score['account'][0] = 0
     else:
-        if any(account_today_id['거래금액'] > outlier_iqr(account_past_id['거래금액'])[2]):
-            score['여수신계좌정보'][0] = 0.3
-        if score['여수신계좌정보'][0] == 1:
-            if any(outlier_iqr(account_past_id['거래금액'])[1] < account_today_id['거래금액']):
-                if any(account_today_id['거래금액'] < outlier_iqr(account_past_id['거래금액'])[2]):
-                    score['여수신계좌정보'][0] = 0.2
-            if any(outlier_iqr(account_past_id['거래금액'])[0] < account_today_id['거래금액']):
-                if any(account_today_id['거래금액'] < outlier_iqr(account_past_id['거래금액'])[1]):
-                    score['여수신계좌정보'][0] = 0.1
+        if any(account_today_id['value'] > outlier_iqr(account_past_id['value'])[2]):
+            score['account'][0] = 0.3
+        if score['account'][0] == 1:
+            if any(outlier_iqr(account_past_id['value'])[1] < account_today_id['value']):
+                if any(account_today_id['value'] < outlier_iqr(account_past_id['value'])[2]):
+                    score['account'][0] = 0.2
+            if any(outlier_iqr(account_past_id['value'])[0] < account_today_id['value']):
+                if any(account_today_id['value'] < outlier_iqr(account_past_id['value'])[1]):
+                    score['account'][0] = 0.1
             else:
-                score['여수신계좌정보'][0] = 0
+                score['account'][0] = 0
 
     for path, im, im0s, vid_cap, s in dataset:
         t1 = time_sync()
@@ -334,85 +336,86 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     vid_writer[i].write(im0)
 
     # 여수신대출정보
-    loan_past_id = loan_past[loan_past['대출차주명(고유번호)']==id]
-    loan_today_id = loan_today[loan_today['대출차주명(고유번호)']==id]
+    loan_past_id = loan_past[loan_past['id']==id]
+    loan_today_id = loan_today[loan_today['id']==id]
 
     # 여수신대출정보 점수
     if len(loan_today_id) == 0:
-        score['여수신대출정보'][0] = 0
+        score['loan'][0] = 0
     else:
-        if any(loan_today_id['대출원금'] > outlier_iqr(loan_past_id['대출원금'])[2]):
-            score['여수신대출정보'][0] = 0.2
-        if score['여수신대출정보'][0] == 1:
-            if any(outlier_iqr(loan_past_id['대출원금'])[1] < loan_today_id['대출원금']):
-                if any(loan_today_id['대출원금'] < outlier_iqr(loan_past_id['대출원금'])[2]):
-                    score['여수신대출정보'][0] = 0.1
-            if any(outlier_iqr(loan_past_id['대출원금'])[0] < loan_today_id['대출원금']):
-                if any(loan_today_id['대출원금'] < outlier_iqr(loan_past_id['대출원금'])[1]):
-                    score['여수신대출정보'][0] = 0.05
+        if any(loan_today_id['value'] > outlier_iqr(loan_past_id['value'])[2]):
+            score['loan'][0] = 0.2
+        if score['loan'][0] == 1:
+            if any(outlier_iqr(loan_past_id['value'])[1] < loan_today_id['value']):
+                if any(loan_today_id['value'] < outlier_iqr(loan_past_id['value'])[2]):
+                    score['loan'][0] = 0.1
+            if any(outlier_iqr(loan_past_id['value'])[0] < loan_today_id['value']):
+                if any(loan_today_id['value'] < outlier_iqr(loan_past_id['value'])[1]):
+                    score['loan'][0] = 0.05
             else:
-                score['여수신대출정보'][0] = 0
+                score['loan'][0] = 0
     
     # 보험대출정보
-    insurance_past_id = insurance_past[insurance_past['고유번호']==id]
-    insurance_today_id = insurance_today[insurance_today['고유번호']==id]
+    insurance_past_id = insurance_past[insurance_past['id']==id]
+    insurance_today_id = insurance_today[insurance_today['id']==id]
 
     # 보험대출정보 점수
     if len(insurance_today_id) == 0:
-        score['보험대출정보'][0] = 0
+        score['insurance'][0] = 0
     else:
-        if any(insurance_today_id['대출원금'] > outlier_iqr(insurance_past_id['대출원금'])[2]):
-            score['보험대출정보'][0] = 0.2
-        if score['보험대출정보'][0] == 1:
-            if any(outlier_iqr(insurance_past_id['대출원금'])[1] < insurance_today_id['대출원금']):
-                if any(insurance_today_id['대출원금'] < outlier_iqr(insurance_past_id['대출원금'])[2]):
-                    score['보험대출정보'][0] = 0.1
-            if any(outlier_iqr(insurance_past_id['대출원금'])[0] < insurance_today_id['대출원금']):
-                if any(insurance_today_id['대출원금'] < outlier_iqr(insurance_past_id['대출원금'])[1]):
-                    score['보험대출정보'][0] = 0.05
+        if any(insurance_today_id['value'] > outlier_iqr(insurance_past_id['value'])[2]):
+            score['insurance'][0] = 0.2
+        if score['insurance'][0] == 1:
+            if any(outlier_iqr(insurance_past_id['value'])[1] < insurance_today_id['value']):
+                if any(insurance_today_id['value'] < outlier_iqr(insurance_past_id['value'])[2]):
+                    score['insurance'][0] = 0.1
+            if any(outlier_iqr(insurance_past_id['value'])[0] < insurance_today_id['value']):
+                if any(insurance_today_id['value'] < outlier_iqr(insurance_past_id['value'])[1]):
+                    score['insurance'][0] = 0.05
             else:
-                score['보험대출정보'][0] = 0
+                score['insurance'][0] = 0
     
     #카드 대출정보
-    card_past_short_id = card_past[(card_past['고유번호']==id) & (card_past['단기대출여부']== True)]
-    card_today_short_id = card_today[(card_today['고유번호']==id) & (card_past['단기대출여부']== True)]
+    card_past_short_id = card_past[(card_past['id']==id) & (card_past['short_loan']== True)]
+    card_today_short_id = card_today[(card_today['id']==id) & (card_today['short_loan']== True)]
 
-    card_past_long_id = card_past[(card_past['고유번호']==id) & (card_past['장기대출여부']== True)]
-    card_today_long_id = card_today[(card_today['고유번호']==id) & (card_past['장기대출여부']== True)]
+    card_past_long_id = card_past[(card_past['id']==id) & (card_past['long_loan']== True)]
+    card_today_long_id = card_today[(card_today['id']==id) & (card_today['long_loan']== True)]
 
     #카드 대출정보 점수
     if len(card_today_short_id) == 0:
-        score['카드단기대출정보'][0] = 0
+        score['card_short'][0] = 0
     else:
-        if any(card_today_short_id['단기대출이용금액'] > outlier_iqr(card_past_short_id['단기대출이용금액'])[2]):
-            score['카드단기대출정보'][0] = 0.15
-        if score['카드단기대출정보'][0] == 1:
-            if any(outlier_iqr(card_past_short_id['단기대출이용금액'])[1] < card_today_short_id['단기대출이용금액']):
-                if any(card_today_short_id['단기대출이용금액'] < outlier_iqr(card_past_short_id['단기대출이용금액'])[2]):
-                    score['카드단기대출정보'][0] = 0.1
-            if any(outlier_iqr(card_past_short_id['단기대출이용금액'])[0] < card_today_short_id['단기대출이용금액']):
-                if any(card_today_short_id['단기대출이용금액'] < outlier_iqr(card_past_short_id['단기대출이용금액'])[1]):
-                    score['카드단기대출정보'][0] = 0.05
+        if any(card_today_short_id['short_loan_value'] > outlier_iqr(card_past_short_id['short_loan_value'])[2]):
+            score['card_short'][0] = 0.15
+        if score['card_short'][0] == 1:
+            if any(outlier_iqr(card_past_short_id['short_loan_value'])[1] < card_today_short_id['short_loan_value']):
+                if any(card_today_short_id['short_loan_value'] < outlier_iqr(card_past_short_id['short_loan_value'])[2]):
+                    score['card_short'][0] = 0.1
+            if any(outlier_iqr(card_past_short_id['short_loan_value'])[0] < card_today_short_id['short_loan_value']):
+                if any(card_today_short_id['short_loan_value'] < outlier_iqr(card_past_short_id['short_loan_value'])[1]):
+                    score['card_short'][0] = 0.05
             else:
-                score['카드단기대출정보'][0] = 0
+                score['card_short'][0] = 0
 
     if len(card_today_long_id) == 0:
-        score['카드장기대출정보'][0] = 0
+        score['card_long'][0] = 0
     else:
-        if any(card_today_long_id['장기대출이용금액'] > outlier_iqr(card_past_long_id['장기대출이용금액'])[2]):
-            score['카드장기대출정보'][0] = 0.15
-        if score['카드장기대출정보'][0] == 1:
-            if any(outlier_iqr(card_past_long_id['장기대출이용금액'])[1] < card_today_long_id['장기대출이용금액']):
-                if any(card_today_long_id['장기대출이용금액'] < outlier_iqr(card_past_long_id['장기대출이용금액'])[2]):
-                    score['카드장기대출정보'][0] = 0.1
-            if any(outlier_iqr(card_past_long_id['장기대출이용금액'])[0] < card_today_long_id['장기대출이용금액']):
-                if any(card_today_long_id['장기대출이용금액'] < outlier_iqr(card_past_long_id['장기대출이용금액'])[1]):
-                    score['카드장기대출정보'][0] = 0.05
+        if any(card_today_long_id['long_loan_value'] > outlier_iqr(card_past_long_id['long_loan_value'])[2]):
+            score['card_long'][0] = 0.15
+        if score['card_long'][0] == 1:
+            if any(outlier_iqr(card_past_long_id['long_loan_value'])[1] < card_today_long_id['long_loan_value']):
+                if any(card_today_long_id['long_loan_value'] < outlier_iqr(card_past_long_id['long_loan_value'])[2]):
+                    score['card_long'][0] = 0.1
+            if any(outlier_iqr(card_past_long_id['long_loan_value'])[0] < card_today_long_id['long_loan_value']):
+                if any(card_today_long_id['long_loan_value'] < outlier_iqr(card_past_long_id['long_loan_value'])[1]):
+                    score['card_long'][0] = 0.05
             else:
-                score['카드장기대출정보'][0] = 0
+                score['card_long'][0] = 0
     
     #금융데이터 점수
     mydata_score = score.sum(axis=1)[0]
+    print(mydata_score)
 
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
