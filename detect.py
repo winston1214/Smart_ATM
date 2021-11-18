@@ -113,13 +113,16 @@ def run(id=0,
     if pt and device.type != 'cpu':
         model(torch.zeros(1, 3, *imgsz).to(device).type_as(next(model.model.parameters())))  # warmup
     dt, seen = [0.0, 0.0, 0.0], 0
+    # facial recognition
+    face_model = Facial_model().to(device)
+    face_model.load_state_dict(torch.load('sample_best.pt'))
 
     call_check = 0
     call_hand = []
     call_hand_loc = ''
     calling_weights = 0
     calling = False
-    facial = True
+    face_weights = 0
 
     #금융데이터
     account_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.09.01~2021.10.30)')
@@ -283,7 +286,8 @@ def run(id=0,
                     face_xyxy = list(map(lambda x: x[:-1],face_xyxy))
                     face_left_x ,face_right_x = np.array(face_xyxy)[:,0],np.array(face_xyxy)[:,2]
 
-                    crop = save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True,save = False)
+                    face_crop = save_one_box(face_xyxy, im0, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True,save = False)
+                    
 
                     if len(hand_left_x) >1: # 손이 두개 나올 때 왼손 오른손 구분
                         if call_hand.count('left')>call_hand.count('right'):
@@ -309,7 +313,19 @@ def run(id=0,
                             if call_check >= 20:
                                 cv2.putText(im0,'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 calling = True
-                    
+                    if calling:
+                        
+                        face_crop = cv2.resize(face_crop, dsize=(640,640),interpolation=cv2.INTER_LINEAR)
+                        image_swap = np.swapaxes(face_crop, 0,2)
+                        image_swap = np.expand_dims(image_swap, axis=0)
+                        tensor = torch.from_numpy(image_swap).type(torch.FloatTensor).to(device)
+                        face_model.eval()
+                        output = torch.sigmoid(face_model(tensor))
+                        output = output.cpu().detach().numpy().flatten()
+                        
+                        face_weights = output[1]*0.3 # 표정 가중치
+                         
+     
 
 
                 if 'hand' not in label_ls:
@@ -320,8 +336,10 @@ def run(id=0,
                     call_hand.pop()
                 
                 if calling : calling_weights = 0.3
-
-
+                
+            danger_score = sum([calling_weights,face_weights]) # 여기에 점수 변수 넣어줘
+            print(danger_score)
+            # cv2.putText(im0,f'위험도 {np.sum()}')
             # Print time (inference-only)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
 
@@ -444,7 +462,7 @@ def run(id=0,
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--id', type=int, default=0, help='ID number')
+    parser.add_argument('--id', type=int, default=101, help='ID number')
     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model path(s)')
     parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')

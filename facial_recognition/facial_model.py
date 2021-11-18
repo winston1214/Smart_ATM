@@ -19,5 +19,4 @@ class Facial_model(nn.Module):
         # x = F.relu(self.conv2d(x))
         x = F.relu(self.pretrained(x))
         x = self.FC(x)
-        x = torch.sigmoid(x)
         return x
