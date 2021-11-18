@@ -410,6 +410,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     score['카드장기대출정보'][0] = 0.05
             else:
                 score['카드장기대출정보'][0] = 0
+    
+    #금융데이터 점수
+    mydata_score = score.sum(axis=1)[0]
 
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
