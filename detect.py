@@ -113,6 +113,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     call_hand = []
     call_hand_loc = ''
 
+    #금융데이터
     account_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.09.01~2021.10.30)')
     account_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.10.31)')
     loan_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2020.10.31~2021.10.28)')
