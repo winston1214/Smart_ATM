@@ -13,6 +13,7 @@ from tqdm.notebook import tqdm
 from facial_model import Facial_model
 from facial_dataloader import CustomDatasets
 import argparse
+from model_save import save
 
 
 def face_train(opt):
@@ -22,7 +23,8 @@ def face_train(opt):
                     T.ToTensor(),
                     T.Resize((640,640)),
                     #T.Normalize([train_meanB,train_meanG,train_meanR],[train_stdB,train_stdG,train_stdR])
-                    T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                    T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                    # T.RandomCrop(256)
     ])
     dataset = CustomDatasets(f'{opt.root}/',opt.csv,transform = train_transform)
     trainset,valset = D.random_split(dataset,[int(len(dataset)*0.8), int(len(dataset)*0.2)], generator=torch.Generator().manual_seed(42))
@@ -59,7 +61,7 @@ def face_train(opt):
     
     model = Facial_model()
     model.to(device)
-    optimizer = torch.optim.AdamW(model.parameters(),lr = lr)
+    optimizer = torch.optim.Adam(model.parameters(),lr = lr)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max = 0.1,eta_min = 1e-4)
     criterion = nn.CrossEntropyLoss().to(device)
 
@@ -92,6 +94,7 @@ def face_train(opt):
             # print(probs)
             preds = torch.argmax(probs,1)
             preds = preds.cpu().detach().numpy()
+            # print(preds)
             labels = labels.cpu().detach().numpy()
             
 
@@ -122,6 +125,10 @@ def face_train(opt):
             val_plt_list.append(val_acc)
             print(f'validation acc : {val_acc}')
         lr_scheduler.step()
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            save('best','weights/',e,model,optimizer)
+        save('last','weights/',e,model,optimizer)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
