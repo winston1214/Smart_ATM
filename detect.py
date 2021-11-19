@@ -19,7 +19,6 @@ from pathlib import Path
 import numpy as np
 import cv2
 import torch
-import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import pandas as pd
 import warnings
@@ -38,6 +37,7 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 from facial_recognition.facial_model import Facial_model
+import torch
 
 account =  loan = insurance = card_short = card_long = 1
 mydata_weights =  0
@@ -170,8 +170,7 @@ def card_long_loan():
 
 @torch.no_grad()
 def run(id=101,
-        facial_weights_file = ROOT/ 'weights/facial_best.pt',
-        weights=ROOT / 'weights/detect_best.pt',  # model.pt path(s)
+        weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         source=ROOT / 'data/images',  # file/dir/URL/glob, 0 for webcam
         imgsz=640,  # inference size (pixels)
         conf_thres=0.25,  # confidence threshold
@@ -237,7 +236,7 @@ def run(id=101,
     dt, seen = [0.0, 0.0, 0.0], 0
     # facial recognition
     face_model = Facial_model().to(device)
-    face_model.load_state_dict(torch.load(facial_weights_file))
+    face_model.load_state_dict(torch.load('sample_best.pt'))
 
     call_check = 0
     call_hand = []
@@ -245,15 +244,14 @@ def run(id=101,
     calling_weights = 0
     calling = False
     face_weights = 0
-    face_cls = ['Normal','Danger','Happy']
     
-    account = account_data()  
-    loan = loan_data() 
-    insurance = insurance_data() 
-    card_short = card_short_loan() 
-    card_long = card_long_loan() 
+    account = account_data()  #여수신계좌정보
+    loan = loan_data() #여수신대출정보
+    insurance = insurance_data() #보험대출정보
+    card_short = card_short_loan() #카드단기대출정보
+    card_long = card_long_loan() #카드장기대출정보
  
-    mydata_weights = 0.6 * (account +  loan + insurance + card_short + card_long)  #금융데이터 점수
+    mydata_weights = 0.4 * (account +  loan + insurance + card_short + card_long)  #금융데이터 점수
 
     for path, im, im0s, vid_cap, s in dataset:
         t1 = time_sync()
@@ -412,22 +410,15 @@ def run(id=101,
                                 calling = True
                     if calling:
                         
-                        face_crop = cv2.resize(face_crop, dsize=(482,482),interpolation=cv2.INTER_LINEAR)
+                        face_crop = cv2.resize(face_crop, dsize=(640,640),interpolation=cv2.INTER_LINEAR)
                         image_swap = np.swapaxes(face_crop, 0,2)
                         image_swap = np.expand_dims(image_swap, axis=0)
                         tensor = torch.from_numpy(image_swap).type(torch.FloatTensor).to(device)
                         face_model.eval()
-                        output = F.softmax(face_model(tensor))
+                        output = torch.sigmoid(face_model(tensor))
                         output = output.cpu().detach().numpy().flatten()
-
-                        pred_emotion = face_cls[np.argmax(output)]
-                        cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                         
-                        if pred_emotion == 'danger':
-                            face_weights = output[1]*0.3 # 표정 가중치
-                        else:
-                            face_weights = output[1]*0.1 
-                        
+                        face_weights = output[1]*0.3 # 표정 가중치
                          
 
                 if 'hand' not in label_ls:
@@ -441,10 +432,6 @@ def run(id=101,
                 
             danger_score = sum([calling_weights,face_weights,mydata_weights]) # 여기에 점수 변수 넣어줘
             print(danger_score)
-            cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-            if danger_score > 0.7:
-                print('Danger')
-                cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
             # cv2.putText(im0,f'위험도 {np.sum()}')
             # Print time (inference-only)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
@@ -488,7 +475,6 @@ def run(id=101,
 def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--id', type=int, default=101, help='ID number')
-    parser.add_argument('--facial-weights-file', type=str, default='weights/facial_best.pt', help='facial recognition weights file')
     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model path(s)')
     parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
