@@ -251,7 +251,7 @@ def run(id=101,
     card_short = card_short_loan() #카드단기대출정보
     card_long = card_long_loan() #카드장기대출정보
  
-    mydata_weights = 0.4 * (account +  loan + insurance + card_short + card_long)  #금융데이터 점수
+    mydata_weights = 0.6 * (account +  loan + insurance + card_short + card_long)  #금융데이터 점수
 
     for path, im, im0s, vid_cap, s in dataset:
         t1 = time_sync()
