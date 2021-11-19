@@ -42,14 +42,14 @@ from facial_recognition.facial_model import Facial_model
 account =  loan = insurance = card_short = card_long = 1
 mydata_weights =  0
 
-account_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.09.01~2021.10.30)')
-account_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.10.31)')
-loan_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2020.10.31~2021.10.28)')
-loan_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2021.10.29~2021.10.31)')
-insurance_past = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2020.10.31~2021.10.28)')
-insurance_today = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2021.10.29~2021.10.31)')
-card_past = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2020.10.31~2021.10.28)')
-card_today = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2021.10.29~2021.10.31)') 
+account_past = pd.read_excel('./data/data.xlsx',sheet_name='account(2021.09.01~2021.10.30)')
+account_today = pd.read_excel('./data/data.xlsx',sheet_name='account(2021.10.31)')
+loan_past = pd.read_excel('./data/data.xlsx',sheet_name='loan(2020.10.31~2021.10.28)')
+loan_today = pd.read_excel('./data/data.xlsx',sheet_name='loan(2021.10.29~2021.10.31)')
+insurance_past = pd.read_excel('./data/data.xlsx',sheet_name='insuranc(2020.10.31~2021.10.28)')
+insurance_today = pd.read_excel('./data/data.xlsx',sheet_name='insuranc(2021.10.29~2021.10.31)')
+card_past = pd.read_excel('./data/data.xlsx',sheet_name='card(2020.10.31~2021.10.28)')
+card_today = pd.read_excel('./data/data.xlsx',sheet_name='card(2021.10.29~2021.10.31)') 
 
 def outlier_iqr(data):
     q1, q2, q3 = np.percentile(data,[25,50,75])
@@ -247,11 +247,11 @@ def run(id=101,
     face_weights = 0
     face_cls = ['Normal','Danger','Happy']
     
-    account = account_data()  #여수신계좌정보
-    loan = loan_data() #여수신대출정보
-    insurance = insurance_data() #보험대출정보
-    card_short = card_short_loan() #카드단기대출정보
-    card_long = card_long_loan() #카드장기대출정보
+    account = account_data()  
+    loan = loan_data() 
+    insurance = insurance_data() 
+    card_short = card_short_loan() 
+    card_long = card_long_loan() 
  
     mydata_weights = 0.6 * (account +  loan + insurance + card_short + card_long)  #금융데이터 점수
 
