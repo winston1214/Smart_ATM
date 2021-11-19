@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
 import torch
 import torch.nn as nn
@@ -14,6 +16,7 @@ from facial_model import Facial_model
 from facial_dataloader import CustomDatasets
 import argparse
 from model_save import save
+from make_plot import make_plot
 
 
 def face_train(opt):
@@ -21,7 +24,7 @@ def face_train(opt):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") # 디바이스 설정
     train_transform = T.Compose([
                     T.ToTensor(),
-                    T.Resize((640,640)),
+                    T.Resize((482,482)),
                     #T.Normalize([train_meanB,train_meanG,train_meanR],[train_stdB,train_stdG,train_stdR])
                     T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                     # T.RandomCrop(256)
@@ -62,7 +65,7 @@ def face_train(opt):
     model = Facial_model()
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(),lr = lr)
-    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max = 0.1,eta_min = 1e-4)
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max = 10,eta_min = 1e-4)
     criterion = nn.CrossEntropyLoss().to(device)
 
     
@@ -71,6 +74,8 @@ def face_train(opt):
     best_val_acc = 0
     loss_list = []
     train_plt_list = []
+    val_acc_list = []
+    val_plt_list = []
     for e in tqdm(range(EPOCH)):
         train_acc_list = []
         running_loss = 0
@@ -91,11 +96,14 @@ def face_train(opt):
 
             running_loss += loss.item()
 
-            # print(probs)
+            
+            probs = probs.cpu().detach()
             preds = torch.argmax(probs,1)
-            preds = preds.cpu().detach().numpy()
-            # print(preds)
+            preds = preds.numpy()
+            #print(probs)
+            #print(preds)
             labels = labels.cpu().detach().numpy()
+            #print(labels)
             
 
             
@@ -107,8 +115,8 @@ def face_train(opt):
         print(f'Epochs : {e+1}/{EPOCH}, loss : {running_loss/total_step}, Train accuracy : {train_acc}')
 
         model.eval()
-        val_acc_list = []
-        val_plt_list = []
+
+        
         with torch.no_grad():
 
             for images,labels in valloader:
@@ -116,10 +124,14 @@ def face_train(opt):
                 labels = labels.to(device=device, dtype=torch.int64)
                 probs = model(images)
                 loss = criterion(probs,labels)
+                
+                probs = probs.cpu().detach()
                 preds = torch.argmax(probs,1)
-                preds = preds.cpu().detach().numpy()
+                preds = preds.numpy()
+                
                 labels = labels.cpu().detach().numpy()
                 batch_acc = (labels == preds).mean()
+                
                 val_acc_list.append(batch_acc)
             val_acc = np.mean(val_acc_list)
             val_plt_list.append(val_acc)
@@ -127,8 +139,12 @@ def face_train(opt):
         lr_scheduler.step()
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            save('best','weights/',e,model,optimizer)
+            #save('best','weights/',e,model,optimizer)
+            torch.save(model.state_dict(), 'weights/best.pt')
         save('last','weights/',e,model,optimizer)
+    make_plot(loss_list,os.getcwd(),'train loss')
+    make_plot(train_acc_list,os.getcwd(),'train accuracy')
+    make_plot(val_plt_list,os.getcwd(),'val accuracy')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

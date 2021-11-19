@@ -12,11 +12,12 @@ class Facial_model(nn.Module):
         super().__init__()
         # self.conv2d = nn.Conv2d(1,3,3,stride = 1)
         
-        self.pretrained = EfficientNet.from_pretrained('efficientnet-b3')
+        self.pretrained = EfficientNet.from_pretrained('efficientnet-b4')
         self.FC = nn.Linear(1000,3)
 
     def forward(self,x):
         # x = F.relu(self.conv2d(x))
         x = F.relu(self.pretrained(x))
         x = self.FC(x)
+        # x = torch.sigmoid(x)
         return x
