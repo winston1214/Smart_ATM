@@ -42,14 +42,14 @@ from facial_recognition.facial_model import Facial_model
 account =  loan = insurance = card_short = card_long = 1
 mydata_weights =  0
 
-account_past = pd.read_excel('./data/data.xlsx',sheet_name='account(2021.09.01~2021.10.30)')
-account_today = pd.read_excel('./data/data.xlsx',sheet_name='account(2021.10.31)')
-loan_past = pd.read_excel('./data/data.xlsx',sheet_name='loan(2020.10.31~2021.10.28)')
-loan_today = pd.read_excel('./data/data.xlsx',sheet_name='loan(2021.10.29~2021.10.31)')
-insurance_past = pd.read_excel('./data/data.xlsx',sheet_name='insuranc(2020.10.31~2021.10.28)')
-insurance_today = pd.read_excel('./data/data.xlsx',sheet_name='insuranc(2021.10.29~2021.10.31)')
-card_past = pd.read_excel('./data/data.xlsx',sheet_name='card(2020.10.31~2021.10.28)')
-card_today = pd.read_excel('./data/data.xlsx',sheet_name='card(2021.10.29~2021.10.31)') 
+account_past = pd.read_csv('./my_data/account1.csv')
+account_today = pd.read_csv('./my_data/account2.csv')
+loan_past = pd.read_csv('./my_data/loan1.csv')
+loan_today = pd.read_csv('./my_data/loan2.csv')
+insurance_past = pd.read_csv('./my_data/insurance1.csv')
+insurance_today = pd.read_csv('./my_data/insurance2.csv')
+card_past = pd.read_csv('./my_data/card1.csv')
+card_today = pd.read_csv('./my_data/card2.csv') 
 
 def outlier_iqr(data):
     q1, q2, q3 = np.percentile(data,[25,50,75])
