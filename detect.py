@@ -49,6 +49,7 @@ def outlier_iqr(data):
 def account_data():
   account_past_id = account_past[(account_past['id']==id) & (account_past['type']==1) & (account_past['class']==2)]
   account_today_id = account_today[(account_today['id']==id) & (account_today['type']==1) & (account_today['class']==2)]
+  account = 0
   #여수신계좌정보 점수
   if len(account_today_id) == 0:
     account = 0
@@ -70,6 +71,7 @@ def loan_data():
   # 여수신대출정보
   loan_past_id = loan_past[loan_past['id']==id]
   loan_today_id = loan_today[loan_today['id']==id]
+  loan = 0
 
   # 여수신대출정보 점수
   if len(loan_today_id) == 0:
@@ -92,7 +94,7 @@ def insurance_data():
   # 보험대출정보
   insurance_past_id = insurance_past[insurance_past['id']==id]
   insurance_today_id = insurance_today[insurance_today['id']==id]
-
+  insurance = 0
   # 보험대출정보 점수
   if len(insurance_today_id) == 0:
     insurance = 0
@@ -114,7 +116,7 @@ def card_short_loan():
   #카드 대출정보
   card_past_short_id = card_past[(card_past['id']==id) & (card_past['short_loan']== True)]
   card_today_short_id = card_today[(card_today['id']==id) & (card_today['short_loan']== True)]
-
+  card_short = 0
   #카드 단기대출정보 점수
   if len(card_today_short_id) == 0:
     card_short = 0
@@ -135,7 +137,7 @@ def card_short_loan():
 def card_long_loan():
   card_past_long_id = card_past[(card_past['id']==id) & (card_past['long_loan']== True)]
   card_today_long_id = card_today[(card_today['id']==id) & (card_today['long_loan']== True)]
-
+  card_long = 0
   #카드 장기대출정보 점수
   if len(card_today_long_id) == 0:
     card_long = 0
@@ -388,6 +390,7 @@ def run(id=101,
                             call_check += 1
                             if call_check >= 20:
                                 cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling_weights = 0.3
                                 calling = True
                     if face_right_x < hand_right_x:
                         call_hand.append('right')
@@ -395,6 +398,7 @@ def run(id=101,
                             call_check += 1
                             if call_check >= 20:
                                 cv2.putText(im0,'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling_weights = 0.3
                                 calling = True
                     if calling:
                         
@@ -424,8 +428,12 @@ def run(id=101,
                     call_hand.pop()
                 
                 if calling : calling_weights = 0.3
+                if calling == False: calling_weights = 0.1
                 
             danger_score = sum([calling_weights,face_weights,mydata_weights]) # 여기에 점수 변수 넣어줘
+            print('bank',mydata_weights)
+            print('face',face_weights)
+            print('calling_weights',calling_weights)
             print(danger_score)
             cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             if danger_score > 0.7:
@@ -475,7 +483,7 @@ def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--id', type=int, default=101, help='ID number')
     parser.add_argument('--facial-weights-file', type=str, default='weights/facial_best.pt', help='facial recognition weights file')
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model path(s)')
+    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'weights/detect_best.pt', help='model path(s)')
     parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
