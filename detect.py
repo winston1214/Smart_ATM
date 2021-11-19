@@ -25,17 +25,17 @@ from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 from facial_recognition.facial_model import Facial_model
 
-account =  loan = insurance = card_short = card_long = 1
-mydata_weights =  0
+account = loan = insurance = card_short = card_long = 1
+mydata_weights = 0
 
-account_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.09.01~2021.10.30)')
-account_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신계좌정보(2021.10.31)')
-loan_past = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2020.10.31~2021.10.28)')
-loan_today = pd.read_excel('./data/data.xlsx',sheet_name='여수신대출정보(2021.10.29~2021.10.31)')
-insurance_past = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2020.10.31~2021.10.28)')
-insurance_today = pd.read_excel('./data/data.xlsx',sheet_name='보험대출정보(2021.10.29~2021.10.31)')
-card_past = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2020.10.31~2021.10.28)')
-card_today = pd.read_excel('./data/data.xlsx',sheet_name='카드대출정보(2021.10.29~2021.10.31)') 
+account_past = pd.read_csv('./my_data/account1.csv')
+account_today = pd.read_csv('./my_data/account2.csv')
+loan_past = pd.read_csv('./my_data/loan1.csv')
+loan_today = pd.read_csv('./my_data/loan2.csv')
+insurance_past = pd.read_csv('./my_data/insurance1.csv')
+insurance_today = pd.read_csv('./my_data/insurance2.csv')
+card_past = pd.read_csv('./my_data/card1.csv')
+card_today = pd.read_csv('./my_data/card2.csv')
 
 def outlier_iqr(data):
     q1, q2, q3 = np.percentile(data,[25,50,75])
