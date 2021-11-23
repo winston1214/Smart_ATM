@@ -238,7 +238,7 @@ def run(id=101,
     calling_weights = 0
     calling = False
     face_weights = 0
-    face_cls = ['Normal','Danger','Happy']
+    face_cls = ['Normal','Danger']
     mydata_weights = 0
     danger_count = 0
     danger_facial = 0
@@ -419,12 +419,13 @@ def run(id=101,
                         output = output.cpu().detach().numpy().flatten()
 
                         pred_emotion = face_cls[np.argmax(output)]
+                        print(pred_emotion)
                         
-                        
-                        if pred_emotion == 'danger':
+                        if pred_emotion == 'Danger':
                             face_weights = output[1]*0.3 # 표정 가중치
                         else:
-                            face_weights = output[1]*0.1 
+                            face_weights = output[1]*0.1
+                        cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2) 
                         
                         #if danger_facial > 10:
                             # cv2.putText(im0,'danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
@@ -450,17 +451,17 @@ def run(id=101,
             print(danger_count)
             cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             if danger_score > 0.7:
-                cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                # cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                 danger_count +=1
                 cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
             if danger_count == 10:
                 root = tk.Tk()
                 tk.messagebox.showwarning('Voice Pshing',"Danger Account")
                 root.destroy()
-            elif danger_count > 10:
-                cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-            else:
-                cv2.putText(im0,f'{pred_emotion}',(100,200),cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+            # elif danger_count > 10:
+                # cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+            # else:
+                # cv2.putText(im0,f'{pred_emotion}',(100,200),cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
 
             # Stream results
