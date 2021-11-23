@@ -10,7 +10,7 @@ import torch.backends.cudnn as cudnn
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
-import tkinter
+import tkinter as tk
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -242,6 +242,7 @@ def run(id=101,
     mydata_weights = 0
     danger_count = 0
     danger_facial = 0
+    pred_emotion = ''
 
     account = account_data()  #여수신계좌정보
     loan = loan_data() #여수신대출정보
@@ -421,14 +422,14 @@ def run(id=101,
                         
                         
                         if pred_emotion == 'danger':
-                            danger_facial += 1
                             face_weights = output[1]*0.3 # 표정 가중치
                         else:
                             face_weights = output[1]*0.1 
-                        if danger_facial > 10:
-                            cv2.putText(im0,'danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                        else:
-                            cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                        
+                        #if danger_facial > 10:
+                            # cv2.putText(im0,'danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                        # else:
+                            # cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                          
 
                 if 'hand' not in label_ls:
@@ -446,14 +447,20 @@ def run(id=101,
             print('face',face_weights)
             print('calling_weights',calling_weights)
             print(danger_score)
+            print(danger_count)
             cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             if danger_score > 0.7:
+                cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                 danger_count +=1
                 cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
             if danger_count == 10:
-                tkinter.messagebox.showwarnings('Voice Pshing',"Danger Account")
-            # cv2.putText(im0,f'위험도 {np.sum()}')
-            # Print time (inference-only)
+                root = tk.Tk()
+                tk.messagebox.showwarning('Voice Pshing',"Danger Account")
+                root.destroy()
+            elif danger_count > 10:
+                cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+            else:
+                cv2.putText(im0,f'{pred_emotion}',(100,200),cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
 
             # Stream results
