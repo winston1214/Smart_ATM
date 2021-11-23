@@ -9,7 +9,8 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import pandas as pd
 import warnings
-warnings.filterwarnings(action='ignore')
+warnings.filterwarnings('ignore')
+import tkinter
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -239,6 +240,8 @@ def run(id=101,
     face_weights = 0
     face_cls = ['Normal','Danger','Happy']
     mydata_weights = 0
+    danger_count = 0
+    danger_facial = 0
 
     account = account_data()  #여수신계좌정보
     loan = loan_data() #여수신대출정보
@@ -415,20 +418,24 @@ def run(id=101,
                         output = output.cpu().detach().numpy().flatten()
 
                         pred_emotion = face_cls[np.argmax(output)]
-                        cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                        
                         
                         if pred_emotion == 'danger':
+                            danger_facial += 1
                             face_weights = output[1]*0.3 # 표정 가중치
                         else:
                             face_weights = output[1]*0.1 
-                        
+                        if danger_facial > 10:
+                            cv2.putText(im0,'danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                        else:
+                            cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                          
 
                 if 'hand' not in label_ls:
                     call_check = 0
                     calling = False
 
-                if len(call_hand) >= 1000:
+                if len(call_hand) >= 100:
                     call_hand.pop()
                 
                 if calling : calling_weights = 0.3
@@ -441,8 +448,10 @@ def run(id=101,
             print(danger_score)
             cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             if danger_score > 0.7:
-                print('Danger')
+                danger_count +=1
                 cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+            if danger_count == 10:
+                tkinter.messagebox.showwarnings('Voice Pshing',"Danger Account")
             # cv2.putText(im0,f'위험도 {np.sum()}')
             # Print time (inference-only)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
