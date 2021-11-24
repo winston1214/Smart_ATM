@@ -63,7 +63,7 @@ This is the same as **yolov5** method.
 **Facial Recognition**
 
 1. Setting dataset(Image) → Crop the face part of a person's image.
-2. Seeting dataset(Label) → Make a csv file with two columns(image name, label).  **※ I set [noraml : 0, danger : 1, happy : 2]**
+2. Seeting dataset(Label) → Make a csv file with two columns(image name, label).  **※ I set [normal : 0, danger : 1]**
 3. change directory ```$ cd facial_recognition```
 4. run
  ```
