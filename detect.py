@@ -9,8 +9,12 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import pandas as pd
 import warnings
+import tkinter #UI
+import tkinter.font #UI
+import threading #UI
+import imutils #UI
 warnings.filterwarnings('ignore')
-import tkinter as tk
+
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -25,6 +29,8 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 from facial_recognition.facial_model import Facial_model
+from tkinter import * #UI
+from PIL import ImageTk, Image #UI
 
 
 account_past = pd.read_csv('./my_data/account1.csv')
@@ -35,6 +41,20 @@ insurance_past = pd.read_csv('./my_data/insurance1.csv')
 insurance_today = pd.read_csv('./my_data/insurance2.csv')
 card_past = pd.read_csv('./my_data/card1.csv')
 card_today = pd.read_csv('./my_data/card2.csv')
+
+inout_score = [] #UI
+calling_score = [] #UI
+facial_score = [] #UI
+mydata_score = [] #UI
+danger_scores = [] #UI
+cap = cv2.VideoCapture #UI
+counters = 0 #UI
+govideo = True #UI
+callingswitch = False #UI
+facialswitch = False #UI
+mydataswitch = False #UI
+calling_count = 0 #UI
+danger_count = 0 #UI
 
 def outlier_iqr(data):
     q1, q2, q3 = np.percentile(data,[25,50,75])
@@ -161,6 +181,139 @@ def card_long_loan():
     return card_long
 
 
+def calling(): #UI
+    global callingswitch
+    global facialswitch
+
+    callingswitch = True
+    facialswitch = False
+    playvideo()
+    button1['state'] = tkinter.DISABLED
+    button2['state'] = tkinter.DISABLED
+    button3['state'] = tkinter.DISABLED
+
+def facial(): #UI
+    global govideo
+    global callingswitch
+    global facialswitch
+
+    callingswitch = False
+    facialswitch = True
+    govideo = True
+    button2['state'] = tkinter.DISABLED
+
+def mydata(): #UI
+    global govideo
+    global callingswitch
+    global facialswitch
+    global mydataswitch
+    global danger_count
+
+    callingswitch = False
+    facialswitch = False
+    mydataswitch = True
+    danger_count = 0
+    govideo = True
+    button3['state'] = tkinter.DISABLED
+
+def watcher(): #UI
+    global govideo
+
+    timer = threading.Timer(0.1, watcher)
+    timer.start()
+
+    if govideo == True:
+        timer.cancel()
+        videolabel.after(10, playvideo)
+
+def playvideo(): #UI
+    global inout_score
+    global calling_score
+    global facial_score
+    global mydata_score
+    global danger_scores
+    global counters
+    global cap
+    global govideo
+    global callingswitch
+    global facialswitch
+    global calling_count
+    global danger_count
+
+    ret, frame = cap.read()
+    if not ret:
+        cap.release()
+        return
+    frame = imutils.resize(frame, width=1280)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    img = Image.fromarray(frame)
+    imgtk = ImageTk.PhotoImage(image=img)
+    videolabel.imgtk = imgtk
+    videolabel.configure(image=imgtk)
+    if govideo:
+        videolabel.after(10, playvideo)
+    else:
+        watcher()
+
+    if govideo and callingswitch:
+        if calling_score[counters] == 0.3:
+            calling_count += 1
+            if calling_count >= 150:
+                govideo = False
+                warning_popup()
+                button2['state'] = tkinter.NORMAL
+
+    if govideo and facialswitch:
+        if danger_scores[counters] > 0.3:
+            danger_count += 1
+            if danger_count >= 150:
+                govideo = False
+                button3['state'] = tkinter.NORMAL
+
+    if govideo and mydataswitch:
+        if danger_scores[counters] > 0.6:
+            danger_count += 1
+            if danger_count >= 150:
+                govideo = False
+                Danger_popup()
+
+    if counters % 30 == 0:
+        if mydataswitch:
+            text4.delete(1.0, END)
+            text4.insert(END, mydata_score[counters])
+
+        text1.delete(1.0, END)
+        text2.delete(1.0, END)
+        text3.delete(1.0, END)
+        text5.delete(1.0, END)
+
+        text1.insert(END, inout_score[counters])
+        text2.insert(END, calling_score[counters])
+        text3.insert(END, facial_score[counters])
+        text5.insert(END, danger_scores[counters])
+        window.update()
+    counters += 1
+
+def warning_popup(): #UI
+   top= Toplevel(window)
+   top.title("test")
+   top.geometry("600x300+800+500")
+   top.resizable(False, False)
+   popup_label1 = tkinter.Label(top, font=fontStyle, text='Please take off the mask')
+   popup_label1.grid(row=3, column=3, padx=5, pady=5)
+   popup_button2 = tkinter.Button(top, text='OK', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=lambda:[top.destroy()])
+   popup_button2.grid(row=4, column=3, padx=5, pady=5)
+
+def Danger_popup(): #UI
+   top= Toplevel(window)
+   top.title("test")
+   top.geometry("600x300+800+500")
+   top.resizable(False, False)
+   popup_label1 = tkinter.Label(top, font=fontStyle, text='High risk of voicephishing!!!')
+   popup_label1.grid(row=3, column=3, padx=5, pady=5)
+   popup_button2 = tkinter.Button(top, text='OK', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=lambda:[top.destroy()])
+   popup_button2.grid(row=4, column=3, padx=5, pady=5)
+
 @torch.no_grad()
 def run(id=101,
         facial_weights_file = ROOT/ 'weights/facial_best.pt',
@@ -190,6 +343,8 @@ def run(id=101,
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
         ):
+
+
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
@@ -238,11 +393,18 @@ def run(id=101,
     calling_weights = 0
     calling = False
     face_weights = 0
-    face_cls = ['Normal','Danger']
+    face_cls = ['Normal','Danger','Happy']
     mydata_weights = 0
     danger_count = 0
     danger_facial = 0
     pred_emotion = ''
+
+    global inout_score #UI
+    global calling_score #UI
+    global facial_score #UI
+    global mydata_score #UI
+    global danger_scores #UI
+    global cap  # UI
 
     account = account_data()  #여수신계좌정보
     loan = loan_data() #여수신대출정보
@@ -250,6 +412,7 @@ def run(id=101,
     card_short = card_short_loan() #카드단기대출정보
     card_long = card_long_loan() #카드장기대출정보
     mydata_weights = 0.6 * (account + loan + insurance + card_short + card_long)  #금융데이터 점수
+
 
     for path, im, im0s, vid_cap, s in dataset:
         t1 = time_sync()
@@ -327,7 +490,7 @@ def run(id=101,
                 # if label_ls.count('mask') > 1:
                     
 
-                
+
                 if ('mask' in label_ls and 'hand' in label_ls): # check call
                     
                     hand_xyxy = list(filter(lambda x: x[-1] == 'hand',frame_ls))
@@ -354,6 +517,7 @@ def run(id=101,
                             if call_check >= 20:
                                 cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+
                                 calling = True
                                 
                     
@@ -365,6 +529,7 @@ def run(id=101,
                                 cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 calling_weights = 0.3
+
                                 calling = True
                         
                             
@@ -419,14 +584,14 @@ def run(id=101,
                         output = output.cpu().detach().numpy().flatten()
 
                         pred_emotion = face_cls[np.argmax(output)]
-                        print(pred_emotion)
                         
-                        if pred_emotion == 'Danger':
+                        
+                        if pred_emotion == 'danger':
                             face_weights = output[1]*0.3 # 표정 가중치
+
                         else:
                             face_weights = output[1]*0.1
-                        cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2) 
-                        
+
                         #if danger_facial > 10:
                             # cv2.putText(im0,'danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                         # else:
@@ -440,28 +605,37 @@ def run(id=101,
                 if len(call_hand) >= 100:
                     call_hand.pop()
                 
-                if calling : calling_weights = 0.3
-                if calling == False: calling_weights = 0.1
-                
+                if calling :
+                    calling_weights = 0.3
+
+                if calling == False:
+                    calling_weights = 0.1
+
             danger_score = sum([calling_weights,face_weights,mydata_weights]) # 여기에 점수 변수 넣어줘
-            print('bank',mydata_weights)
-            print('face',face_weights)
-            print('calling_weights',calling_weights)
-            print(danger_score)
-            print(danger_count)
+            inout_score.append(account*0.6) #UI
+            calling_score.append(calling_weights) #UI
+            facial_score.append(face_weights) #UI
+            mydata_score.append(mydata_weights) #UI
+            danger_scores.append(danger_score)  #UI
+
+            #print('bank',mydata_weights)
+            #print('face',face_weights)
+            #print('calling_weights',calling_weights)
+            #print(danger_score)
+            #print(danger_count)
             cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             if danger_score > 0.7:
-                # cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                 danger_count +=1
                 cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-            if danger_count == 10:
-                root = tk.Tk()
-                tk.messagebox.showwarning('Voice Pshing',"Danger Account")
-                root.destroy()
-            # elif danger_count > 10:
-                # cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-            # else:
-                # cv2.putText(im0,f'{pred_emotion}',(100,200),cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+            #if danger_count == 10:  #안되서 주석처리함
+                #root = tk.Tk()
+                #tk.messagebox.showwarning('Voice Pshing',"Danger Account")
+                #root.destroy()
+            elif danger_count > 10:
+                cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+            else:
+                cv2.putText(im0,f'{pred_emotion}',(100,200),cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
 
             # Stream results
@@ -489,6 +663,8 @@ def run(id=101,
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
 
+    vid_writer[i].release() #UI
+    cap = cv2.VideoCapture(save_path) #UI
 
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
@@ -544,3 +720,58 @@ if __name__ == "__main__":
     opt = parse_opt()
     id = opt.id
     main(opt)
+
+    window = tkinter.Tk() #UI
+    window.title("test")
+    window.geometry("2240x1100+100+100")
+    window.resizable(False, False)
+
+    fontStyle = tkinter.font.Font(weight="bold", size=20)
+
+    frame1 = tkinter.Frame(window)
+    frame1.grid(row=0, column=0, rowspan=2)
+    frame2 = tkinter.Frame(window)
+    frame2.grid(row=0, column=1)
+    frame3 = tkinter.Frame(window)
+    frame3.grid(row=1, column=1)
+
+    photo = PhotoImage(file="./background.png")
+    videolabel = tkinter.Label(frame1, image=photo)
+    videolabel.grid(row=0, column=0, rowspan=6, padx=5, pady=5)
+
+    label1 = tkinter.Label(frame2, font=fontStyle, text='Financial score')
+    label1.grid(row=1, column=1, padx=5, pady=30)
+    label2 = tkinter.Label(frame2, font=fontStyle, text='Object Detec score')
+    label2.grid(row=2, column=1, padx=5, pady=30)
+    label3 = tkinter.Label(frame2, font=fontStyle, text='Facial Recog score')
+    label3.grid(row=3, column=1, padx=5, pady=30)
+    label4 = tkinter.Label(frame2, font=fontStyle, text='MYDATA score')
+    label4.grid(row=4, column=1, padx=5, pady=30)
+    label5 = tkinter.Label(frame2, font=fontStyle, text='Danger score')
+    label5.grid(row=5, column=1, padx=5, pady=30)
+
+    text1 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
+    text1.grid(row=1, column=2, columnspan=2, padx=5, pady=30)
+    text2 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
+    text2.grid(row=2, column=2, columnspan=2, padx=5, pady=30)
+    text3 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
+    text3.grid(row=3, column=2, columnspan=2, padx=5, pady=30)
+    text4 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
+    text4.grid(row=4, column=2, columnspan=2, padx=5, pady=30)
+    text5 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
+    text5.grid(row=5, column=2, columnspan=2, padx=5, pady=30)
+
+    text1.insert(END, '0.0')
+    text2.insert(END, '0.0')
+    text3.insert(END, '0.0')
+    text4.insert(END, '0.0')
+    text5.insert(END, '0.0')
+
+    button1 = tkinter.Button(frame3, text='Calling', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=calling)
+    button1.grid(row=5, column=1, padx=1, pady=1)
+    button2 = tkinter.Button(frame3, text='Facial', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=facial)
+    button2.grid(row=5, column=2, padx=1, pady=1)
+    button3 = tkinter.Button(frame3, text='Mydata', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=mydata)
+    button3.grid(row=5, column=3, padx=1, pady=1)
+
+    window.mainloop()
