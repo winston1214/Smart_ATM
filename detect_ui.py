@@ -12,6 +12,7 @@ import warnings
 import tkinter #UI
 import tkinter.font #UI
 import threading #UI
+import imutils #UI
 warnings.filterwarnings('ignore')
 
 
@@ -73,14 +74,14 @@ def account_data():
         account = 0
     else:
         if any(account_today_id['value'] > outlier_iqr(account_past_id['value'])[2]):
-            account = 0.3
+            account = 30
     if account == 1:
         if any(outlier_iqr(account_past_id['value'])[1] < account_today_id['value']):
             if any(account_today_id['value'] < outlier_iqr(account_past_id['value'])[2]):
-                account = 0.2
+                account = 20
         if any(outlier_iqr(account_past_id['value'])[0] < account_today_id['value']):
             if any(account_today_id['value'] < outlier_iqr(account_past_id['value'])[1]):
-                account = 0.1
+                account = 10
         else:
             account = 0
 
@@ -97,14 +98,14 @@ def loan_data():
         loan = 0
     else:
         if any(loan_today_id['value'] > outlier_iqr(loan_past_id['value'])[2]):
-            loan = 0.2
+            loan = 20
     if loan == 1:
         if any(outlier_iqr(loan_past_id['value'])[1] < loan_today_id['value']):
             if any(loan_today_id['value'] < outlier_iqr(loan_past_id['value'])[2]):
-                loan = 0.1
+                loan = 10
         if any(outlier_iqr(loan_past_id['value'])[0] < loan_today_id['value']):
             if any(loan_today_id['value'] < outlier_iqr(loan_past_id['value'])[1]):
-                loan = 0.05
+                loan = 5
         else:
             loan = 0
     return loan
@@ -120,14 +121,14 @@ def insurance_data():
         insurance = 0
     else:
         if any(insurance_today_id['value'] > outlier_iqr(insurance_past_id['value'])[2]):
-            insurance = 0.2
+            insurance = 20
         if insurance == 1:
             if any(outlier_iqr(insurance_past_id['value'])[1] < insurance_today_id['value']):
                 if any(insurance_today_id['value'] < outlier_iqr(insurance_past_id['value'])[2]):
-                    insurance = 0.1
+                    insurance = 10
             if any(outlier_iqr(insurance_past_id['value'])[0] < insurance_today_id['value']):
                 if any(insurance_today_id['value'] < outlier_iqr(insurance_past_id['value'])[1]):
-                    insurance = 0.05
+                    insurance = 5
             else:
                 insurance = 0
     return insurance
@@ -143,14 +144,14 @@ def card_short_loan():
         card_short = 0
     else:
         if any(card_today_short_id['short_loan_value'] > outlier_iqr(card_past_short_id['short_loan_value'])[2]):
-            card_short = 0.15
+            card_short = 15
         if card_short == 1:
             if any(outlier_iqr(card_past_short_id['short_loan_value'])[1] < card_today_short_id['short_loan_value']):
                 if any(card_today_short_id['short_loan_value'] < outlier_iqr(card_past_short_id['short_loan_value'])[2]):
-                    ard_short = 0.1
+                    ard_short = 10
             if any(outlier_iqr(card_past_short_id['short_loan_value'])[0] < card_today_short_id['short_loan_value']):
                 if any(card_today_short_id['short_loan_value'] < outlier_iqr(card_past_short_id['short_loan_value'])[1]):
-                    card_short = 0.05
+                    card_short = 5
             else:
                 card_short = 0
     return card_short
@@ -165,15 +166,15 @@ def card_long_loan():
         card_long = 0
     else:
         if any(card_today_long_id['long_loan_value'] > outlier_iqr(card_past_long_id['long_loan_value'])[2]):
-            card_long = 0.15
+            card_long = 15
 
         if card_long == 1:
             if any(outlier_iqr(card_past_long_id['long_loan_value'])[1] < card_today_long_id['long_loan_value']):
                 if any(card_today_long_id['long_loan_value'] < outlier_iqr(card_past_long_id['long_loan_value'])[2]):
-                    card_long = 0.1
+                    card_long = 10
             if any(outlier_iqr(card_past_long_id['long_loan_value'])[0] < card_today_long_id['long_loan_value']):
                 if any(card_today_long_id['long_loan_value'] < outlier_iqr(card_past_long_id['long_loan_value'])[1]):
-                    card_long = 0.05
+                    card_long = 5
             else:
                 card_long = 0
 
@@ -206,10 +207,12 @@ def mydata(): #UI
     global callingswitch
     global facialswitch
     global mydataswitch
+    global danger_count
 
     callingswitch = False
     facialswitch = False
     mydataswitch = True
+    danger_count = 0
     govideo = True
     button3['state'] = tkinter.DISABLED
 
@@ -241,6 +244,7 @@ def playvideo(): #UI
     if not ret:
         cap.release()
         return
+    frame = imutils.resize(frame, width=1280)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(frame)
     imgtk = ImageTk.PhotoImage(image=img)
@@ -251,19 +255,27 @@ def playvideo(): #UI
     else:
         watcher()
 
-    if callingswitch:
+    if govideo and callingswitch:
         if calling_score[counters] == 0.3:
             calling_count += 1
-            if calling_count >= 150:
+            if calling_count >= 90:
                 govideo = False
+                warning_popup()
                 button2['state'] = tkinter.NORMAL
 
-    if facialswitch:
+    if govideo and facialswitch:
         if danger_scores[counters] > 0.3:
             danger_count += 1
-            if danger_count >= 150:
+            if danger_count >= 90:
                 govideo = False
                 button3['state'] = tkinter.NORMAL
+
+    if govideo and mydataswitch:
+        if danger_scores[counters] > 0.6:
+            danger_count += 1
+            if danger_count >= 90:
+                govideo = False
+                Danger_popup()
 
     if counters % 30 == 0:
         if mydataswitch:
@@ -282,6 +294,25 @@ def playvideo(): #UI
         window.update()
     counters += 1
 
+def warning_popup(): #UI
+   top= Toplevel(window)
+   top.title("test")
+   top.geometry("600x300+300+150")
+   top.resizable(False, False)
+   popup_label1 = tkinter.Label(top, font=fontStyle, text='Please take off your mask')
+   popup_label1.grid(row=3, column=3, padx=5, pady=5)
+   popup_button2 = tkinter.Button(top, text='OK', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=lambda:[top.destroy()])
+   popup_button2.grid(row=4, column=3, padx=5, pady=5)
+
+def Danger_popup(): #UI
+   top= Toplevel(window)
+   top.title("test")
+   top.geometry("600x300+800+500")
+   top.resizable(False, False)
+   popup_label1 = tkinter.Label(top, font=fontStyle, text='High risk of voicephishing!!!')
+   popup_label1.grid(row=3, column=3, padx=5, pady=5)
+   popup_button2 = tkinter.Button(top, text='OK', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=lambda:[top.destroy()])
+   popup_button2.grid(row=4, column=3, padx=5, pady=5)
 
 @torch.no_grad()
 def run(id=101,
@@ -484,8 +515,8 @@ def run(id=101,
                         if mask_left_x < hand_right_x < mask_right_x:
                             call_check += 1
                             if call_check >= 20:
-                                cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                                cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                #cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                #cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
 
                                 calling = True
                                 
@@ -495,8 +526,8 @@ def run(id=101,
                         if mask_left_x < hand_left_x < mask_right_x:
                             call_check += 1
                             if call_check >= 20:
-                                cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                                cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                #cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                #cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 calling_weights = 0.3
 
                                 calling = True
@@ -531,16 +562,16 @@ def run(id=101,
                         if face_left_x <= hand_right_x <= face_right_x:
                             call_check += 1
                             if call_check >= 20:
-                                cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                                calling_weights = 0.3
+                                #cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling_weights = 30
                                 calling = True
                     if face_right_x < hand_right_x:
                         call_hand.append('right')
                         if face_left_x <= hand_left_x <= face_right_x:
                             call_check += 1
                             if call_check >= 20:
-                                cv2.putText(im0,'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                                calling_weights = 0.3
+                                #cv2.putText(im0,'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling_weights = 30
                                 calling = True
                     if calling:
                         
@@ -575,10 +606,10 @@ def run(id=101,
                     call_hand.pop()
                 
                 if calling :
-                    calling_weights = 0.3
+                    calling_weights = 30
 
                 if calling == False:
-                    calling_weights = 0.1
+                    calling_weights = 10
 
             danger_score = sum([calling_weights,face_weights,mydata_weights]) # 여기에 점수 변수 넣어줘
             inout_score.append(account*0.6) #UI
@@ -587,24 +618,24 @@ def run(id=101,
             mydata_score.append(mydata_weights) #UI
             danger_scores.append(danger_score)  #UI
 
-            print('bank',mydata_weights)
-            print('face',face_weights)
-            print('calling_weights',calling_weights)
-            print(danger_score)
-            print(danger_count)
-            cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-            if danger_score > 0.7:
-                cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+            #print('bank',mydata_weights)
+            #print('face',face_weights)
+            #print('calling_weights',calling_weights)
+            #print(danger_score)
+            #print(danger_count)
+            #cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+            if danger_score > 70:
+                #cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                 danger_count +=1
-                cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+                #cv2.putText(im0,f'Danger score: %.2f'%danger_score,(250,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
             #if danger_count == 10:  #안되서 주석처리함
                 #root = tk.Tk()
                 #tk.messagebox.showwarning('Voice Pshing',"Danger Account")
                 #root.destroy()
             elif danger_count > 10:
-                cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                #cv2.putText(im0,'Danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             else:
-                cv2.putText(im0,f'{pred_emotion}',(100,200),cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                #cv2.putText(im0,f'{pred_emotion}',(100,200),cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
 
             # Stream results
@@ -692,10 +723,11 @@ if __name__ == "__main__":
 
     window = tkinter.Tk() #UI
     window.title("test")
-    window.geometry("2240x1100+100+100")
+    window.geometry("1780x800+100+100")
     window.resizable(False, False)
 
     fontStyle = tkinter.font.Font(weight="bold", size=20)
+    fontStyle1 = tkinter.font.Font(size=30)
 
     frame1 = tkinter.Frame(window)
     frame1.grid(row=0, column=0, rowspan=2)
@@ -707,28 +739,27 @@ if __name__ == "__main__":
     photo = PhotoImage(file="./background.png")
     videolabel = tkinter.Label(frame1, image=photo)
     videolabel.grid(row=0, column=0, rowspan=6, padx=5, pady=5)
-
     label1 = tkinter.Label(frame2, font=fontStyle, text='Financial score')
-    label1.grid(row=1, column=1, padx=5, pady=30)
-    label2 = tkinter.Label(frame2, font=fontStyle, text='Object Detec score')
-    label2.grid(row=2, column=1, padx=5, pady=30)
-    label3 = tkinter.Label(frame2, font=fontStyle, text='Facial Recog score')
-    label3.grid(row=3, column=1, padx=5, pady=30)
+    label1.grid(row=1, column=1, padx=4, pady=30)
+    label2 = tkinter.Label(frame2, font=fontStyle, text='Calling score')
+    label2.grid(row=2, column=1, padx=4, pady=30)
+    label3 = tkinter.Label(frame2, font=fontStyle, text='Facial score')
+    label3.grid(row=3, column=1, padx=4, pady=30)
     label4 = tkinter.Label(frame2, font=fontStyle, text='MYDATA score')
-    label4.grid(row=4, column=1, padx=5, pady=30)
+    label4.grid(row=4, column=1, padx=4, pady=30)
     label5 = tkinter.Label(frame2, font=fontStyle, text='Danger score')
-    label5.grid(row=5, column=1, padx=5, pady=30)
+    label5.grid(row=5, column=1, padx=4, pady=30)
 
-    text1 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
-    text1.grid(row=1, column=2, columnspan=2, padx=5, pady=30)
-    text2 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
-    text2.grid(row=2, column=2, columnspan=2, padx=5, pady=30)
-    text3 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
-    text3.grid(row=3, column=2, columnspan=2, padx=5, pady=30)
-    text4 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
-    text4.grid(row=4, column=2, columnspan=2, padx=5, pady=30)
-    text5 = tkinter.Text(frame2, height=2, width=20, font=fontStyle)
-    text5.grid(row=5, column=2, columnspan=2, padx=5, pady=30)
+    text1 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
+    text1.grid(row=1, column=2, columnspan=2, padx=5, pady=10)
+    text2 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
+    text2.grid(row=2, column=2, columnspan=2, padx=5, pady=10)
+    text3 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
+    text3.grid(row=3, column=2, columnspan=2, padx=5, pady=10)
+    text4 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
+    text4.grid(row=4, column=2, columnspan=2, padx=5, pady=10)
+    text5 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
+    text5.grid(row=5, column=2, columnspan=2, padx=5, pady=10)
 
     text1.insert(END, '0.0')
     text2.insert(END, '0.0')
@@ -736,11 +767,11 @@ if __name__ == "__main__":
     text4.insert(END, '0.0')
     text5.insert(END, '0.0')
 
-    button1 = tkinter.Button(frame3, text='Calling', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=calling)
+    button1 = tkinter.Button(frame3, text='Calling', overrelief='solid', width=7, font=fontStyle, state=tkinter.NORMAL, command=calling)
     button1.grid(row=5, column=1, padx=1, pady=1)
-    button2 = tkinter.Button(frame3, text='Facial', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=facial)
-    button2.grid(row=5, column=2, padx=1, pady=1)
-    button3 = tkinter.Button(frame3, text='Mydata', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=mydata)
-    button3.grid(row=5, column=3, padx=1, pady=1)
+    button2 = tkinter.Button(frame3, text='Facial', overrelief='solid', width=7, font=fontStyle, state=tkinter.NORMAL, command=facial)
+    button2.grid(row=5, column=3, padx=1, pady=1)
+    button3 = tkinter.Button(frame3, text='Mydata', overrelief='solid', width=7, font=fontStyle, state=tkinter.NORMAL, command=mydata)
+    button3.grid(row=5, column=5, padx=1, pady=1)
 
     window.mainloop()
