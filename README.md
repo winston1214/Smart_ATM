@@ -25,7 +25,7 @@ More detailed description can be found through <a href='https://github.com/winst
      </tr>
 </table>
 
-## OS
+## Environment
 - Ubuntu 18.04.5LTS, Tesla V100-SXM2 32GB
 
 ## Dataset
@@ -35,6 +35,17 @@ More detailed description can be found through <a href='https://github.com/winst
 - Hand Detection : <a href='https://www3.cs.stonybrook.edu/~cvl/projects/hand_det_attention/'>COCO-Hand Dataset</a>
 - My data(Sample Data) : <a href='https://github.com/winston1214/Smart_ATM/blob/master/data/data.xlsx'>Individual Information(we make)</a>
 
+## Model
+
+We use **YOLOv5 + EfficientNet-b4**. Yolov5 is a real-time object detection model that can quickly detect objects. EfficientNet-b4 is a classification model with high accuracy with a small number of parameters.
+
+<img src='https://github.com/winston1214/Smart_ATM/blob/master/picture/yolo_eff.png?raw=true'></img>
+
+## Our Model Flow chart
+
+<p align="center">
+  <img src='https://github.com/winston1214/Smart_ATM/blob/master/picture/our_architecture.png?raw=true'></img>
+</p>
 
 ## How to do?(Demo)
 
@@ -69,4 +80,15 @@ This is the same as **yolov5** method.
  ```
  $ python facial_train.py --root ${image root} --csv ${label csv} --batch {Batch-size} --epochs {Number of epoch} --lr {learning rate}
 ```
+- Train loss
 
+<img src='https://github.com/winston1214/Smart_ATM/blob/master/facial_recognition/train%20loss.png?raw=true' width="70%" height="70%"></img>
+
+- Validation Accuracy
+
+<img src='https://github.com/winston1214/Smart_ATM/blob/master/facial_recognition/val%20accuracy.png?raw=true' width="70%" height="70%"></img>
+
+## Output
+<p align="center">
+<img src='https://github.com/winston1214/Smart_ATM/blob/master/picture/demo.gif?raw=true'></img>
+</p>
