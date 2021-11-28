@@ -257,6 +257,7 @@ def playvideo(): #UI
     global calling_count
     global danger_count
 
+
     ret, frame = cap.read()
     if not ret:
         cap.release()
@@ -275,9 +276,9 @@ def playvideo(): #UI
     if govideo and callingswitch:
         if calling_score[counters] == 30:
             calling_count += 1
-            if calling_count >= 60:
+            if calling_count >= 30:
                 govideo = False
-                warning_popup()
+                warning_popup() # take off mask
                 button2['state'] = tkinter.NORMAL
 
     if govideo and facialswitch:
@@ -290,7 +291,7 @@ def playvideo(): #UI
     if govideo and mydataswitch:
         if danger_scores[counters] > 70:
             danger_count += 1
-            if danger_count >= 30:
+            if danger_count >= 15: # ymym_check
                 govideo = False
                 text5.delete(1.0, END)
                 text5.insert(END, danger_scores[counters])
@@ -615,8 +616,10 @@ def run(id=101,
                         face_model.eval()
                         output = F.softmax(face_model(tensor))
                         output = output.cpu().detach().numpy().flatten()
-
-                        pred_emotion = face_cls[np.argmax(output)]
+                        if np.argmax(output) == 2:
+                            pred_emotion = face_cls[0]
+                        else:
+                            pred_emotion = face_cls[np.argmax(output)]
                         
                         
                         if pred_emotion == 'danger':
@@ -807,9 +810,9 @@ if __name__ == "__main__":
     label5 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Danger Score')
     label5.grid(row=4, column=0, padx=2, pady=15)
 
-    text1 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1)
+    text1 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1) # 입출금
     text1.grid(row=0, column=1, padx=3)
-    text2 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1)
+    text2 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1) # calling
     text2.grid(row=1, column=1, padx=3)
     text3 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1)
     text3.grid(row=2, column=1, padx=3)
