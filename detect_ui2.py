@@ -245,7 +245,7 @@ def playvideo(): #UI
     if not ret:
         cap.release()
         return
-    frame = imutils.resize(frame, width=1280)
+    frame = imutils.resize(frame, width=900)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(frame)
     imgtk = ImageTk.PhotoImage(image=img)
@@ -274,7 +274,6 @@ def playvideo(): #UI
     if govideo and mydataswitch:
         if danger_scores[counters] > 70:
             danger_count += 1
-            
             if danger_count >= 30:
                 govideo = False
                 text5.delete(1.0, END)
@@ -286,7 +285,6 @@ def playvideo(): #UI
             text4.delete(1.0, END)
             text4.insert(END, mydata_score[counters])
 
-
         if callingswitch:
             text2.delete(1.0, END)
             text2.insert(END, calling_score[counters])
@@ -297,33 +295,34 @@ def playvideo(): #UI
 
         text1.delete(1.0, END)
         text1.insert(END, inout_score[counters])
-        
+
         window.update()
     counters += 1
 
 def warning_popup(): #UI
    top= Toplevel(window)
    top.title("Warning")
-   top.geometry("600x300+500+350")
+   top.geometry("500x200+460+380")
    top.resizable(False, False)
-   top.configure(bg=background_color)
+   top.configure(bg='yellow')
 
-   popup_label1 = tkinter.Label(top, bg=background_color, fg=font_color, font=fontStyle, text='Please take off your mask')
-   popup_label1.place(x=120, y=100)
+   popup_label1 = tkinter.Label(top, bg='yellow', fg=font_color2, font=fontStyle, text='Please Take Off Your Mask')
+   popup_label1.place(x=75, y=60)
    popup_button2 = tkinter.Button(top, text='OK', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=lambda:[top.destroy()])
-   popup_button2.place(x=210, y=200)
+   popup_button2.place(x=160, y=120)
 
 def Danger_popup(): #UI
    top= Toplevel(window)
-   top.title("Warning")
-   top.geometry("600x300+500+350")
+   top.title("Danger")
+   top.geometry("500x200+460+380")
    top.resizable(False, False)
-   top.configure(bg=background_color)
+   top.configure(bg='red')
 
-   popup_label1 = tkinter.Label(top, bg=background_color, fg=font_color, font=fontStyle, text='High risk of voicephishing!!!')
-   popup_label1.place(x=120, y=100)
+   popup_label1 = tkinter.Label(top, bg='red', fg=font_color, font=fontStyle, text='High Risk of Voicephishing!!!')
+   popup_label1.place(x=60, y=60)
    popup_button2 = tkinter.Button(top, text='OK', overrelief='solid', width=10, font=fontStyle, state=tkinter.NORMAL, command=lambda:[top.destroy()])
-   popup_button2.place(x=210, y=200)
+   popup_button2.place(x=160, y=120)
+
 
 @torch.no_grad()
 def run(id=101,
@@ -410,7 +409,7 @@ def run(id=101,
     calling_weights = 0
     calling = False
     face_weights = 0
-    face_cls = ['Normal','Danger','Happy']
+    face_cls = ['Normal','Danger','test']
     mydata_weights = 0
     danger_count = 0
     danger_facial = 0
@@ -528,23 +527,23 @@ def run(id=101,
                             hand_left_x = sorted(hand_left_x)[-1]
                             hand_right_x = sorted(hand_right_x)[-1]
 
-                    # if mask_left_x > hand_left_x: # 영상의 왼쪽에서 전화 받음
-                    #     call_hand.append('left')
-                    #     if mask_left_x < hand_right_x < mask_right_x:
-                    #         call_check += 1
-                    #         if call_check >= 100:
-                    #             #cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                    #             #cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                    #             calling_weights = 30.0
+                    if mask_left_x > hand_left_x: # 영상의 왼쪽에서 전화 받음
+                        call_hand.append('left')
+                        if mask_left_x < hand_right_x < mask_right_x:
+                            call_check += 1
+                            if call_check >= 30:
+                                #cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                #cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                calling_weights = 30.0
 
-                    #             calling = True
+                                calling = True
                                 
                     
                     if mask_right_x < hand_right_x: # 영상의 오른쪽에서 전화 받음
                         call_hand.append('right')
                         if mask_left_x < hand_left_x < mask_right_x:
                             call_check += 1
-                            if call_check >= 1000:
+                            if call_check >= 30:
                                 #cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 #cv2.putText(im0,'Take Off mask',(100,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
                                 calling_weights = 30.0
@@ -605,11 +604,11 @@ def run(id=101,
                         
                         
                         if pred_emotion == 'danger':
-                            face_weights = output[1]*10 # 표정 가중치
+                            face_weights = output[1]*30 # 표정 가중치
 
 
                         else:
-                            face_weights = output[1]*10
+                            face_weights = output[1]*30
 
                         #if danger_facial > 10:
                             # cv2.putText(im0,'danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
@@ -628,7 +627,7 @@ def run(id=101,
                     calling_weights = 30
 
                 if calling == False:
-                    calling_weights = 30
+                    calling_weights = 10
 
             danger_score = sum([calling_weights,face_weights,mydata_weights]) # 여기에 점수 변수 넣어줘
             inout_score.append(account*0.6) #UI
@@ -742,18 +741,19 @@ if __name__ == "__main__":
 
     background_color = '#272c39'
     font_color = '#ffffff'
+    font_color2 = '#000000'
 
-    window = tkinter.Tk()  # UI
-    window.title("test")
-    window.geometry("1780x880+100+100")
+    window = tkinter.Tk() #UI
+    window.title("Phishing Hunter v1.0")
+    window.geometry("1660x850+100+170")
     window.resizable(False, False)
     window.configure(bg=background_color)
 
     fontStyle = tkinter.font.Font(weight="bold", size=20)
-    fontStyle1 = tkinter.font.Font(size=30)
+    fontStyle1 = tkinter.font.Font(size=25)
 
     frame1 = tkinter.Frame(window)
-    frame1.grid(row=0, column=0, rowspan=2)
+    frame1.grid(row=0, column=0, rowspan=2, pady=50)
     frame1.configure(bg=background_color)
     frame2 = tkinter.Frame(window)
     frame2.grid(row=0, column=1)
@@ -761,31 +761,46 @@ if __name__ == "__main__":
     frame3 = tkinter.Frame(window)
     frame3.grid(row=1, column=1)
     frame3.configure(bg=background_color)
+    frame4 = tkinter.Frame(window)
+    frame4.grid(row=0, column=2, rowspan=2)
+    frame4.configure(bg=background_color)
+    frame5 = tkinter.Frame(window)
+    frame5.grid(row=2, column=0, columnspan=3)
+    frame5.configure(bg=background_color)
 
-    photo = PhotoImage(file="./video-background1280x848.png")
+    photo = PhotoImage(file="./video-background900x506.png")
     videolabel = tkinter.Label(frame1, image=photo)
-    videolabel.grid(row=0, column=0, rowspan=6, padx=5, pady=5)
-    label1 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Financial score')
-    label1.grid(row=1, column=1, padx=4, pady=30)
-    label2 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Calling score')
-    label2.grid(row=2, column=1, padx=4, pady=30)
-    label3 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Facial score')
-    label3.grid(row=3, column=1, padx=4, pady=30)
-    label4 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='MYDATA score')
-    label4.grid(row=4, column=1, padx=4, pady=30)
-    label5 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Danger score')
-    label5.grid(row=5, column=1, padx=4, pady=30)
+    videolabel.grid(row=0, column=0, rowspan=6, padx=12, pady=5)
 
-    text1 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
-    text1.grid(row=1, column=2, columnspan=2, padx=5, pady=10)
-    text2 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
-    text2.grid(row=2, column=2, columnspan=2, padx=5, pady=10)
-    text3 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
-    text3.grid(row=3, column=2, columnspan=2, padx=5, pady=10)
-    text4 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
-    text4.grid(row=4, column=2, columnspan=2, padx=5, pady=10)
-    text5 = tkinter.Text(frame2, height=1, width=10, font=fontStyle1)
-    text5.grid(row=5, column=2, columnspan=2, padx=5, pady=10)
+    data = PhotoImage(file="./data300x506.png")
+    datalabel = tkinter.Label(frame4, image=data)
+    datalabel.grid(row=0, column=0, padx=10, pady=5)
+
+    flow = PhotoImage(file="./flow1630x206.png")
+    flowlabel = tkinter.Label(frame5, image=flow)
+    flowlabel.grid(row=0, column=0, padx=5)
+
+    label1 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Financial Score')
+    label1.grid(row=0, column=0, padx=2, pady=15)
+    label2 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Calling Score')
+    label2.grid(row=1, column=0, padx=2, pady=15)
+    label3 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Facial Score')
+    label3.grid(row=2, column=0, padx=2, pady=15)
+    label4 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='MYDATA Score')
+    label4.grid(row=3, column=0, padx=2, pady=15)
+    label5 = tkinter.Label(frame2, bg=background_color, fg=font_color, font=fontStyle, text='Danger Score')
+    label5.grid(row=4, column=0, padx=2, pady=15)
+
+    text1 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1)
+    text1.grid(row=0, column=1, padx=3)
+    text2 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1)
+    text2.grid(row=1, column=1, padx=3)
+    text3 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1)
+    text3.grid(row=2, column=1, padx=3)
+    text4 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1)
+    text4.grid(row=3, column=1, padx=3)
+    text5 = tkinter.Text(frame2, height=1, width=9, font=fontStyle1)
+    text5.grid(row=4, column=1, padx=3)
 
     text1.insert(END, '0.0')
     text2.insert(END, '0.0')
@@ -793,11 +808,11 @@ if __name__ == "__main__":
     text4.insert(END, '0.0')
     text5.insert(END, '0.0')
 
-    button1 = tkinter.Button(frame3, text='Calling', overrelief='solid', width=7, font=fontStyle, state=tkinter.NORMAL, command=calling)
-    button1.grid(row=5, column=1, padx=5, pady=1)
-    button2 = tkinter.Button(frame3, text='Facial', overrelief='solid', width=7, font=fontStyle, state=tkinter.NORMAL, command=facial)
-    button2.grid(row=5, column=3, padx=5, pady=1)
-    button3 = tkinter.Button(frame3, text='Mydata', overrelief='solid', width=7, font=fontStyle, state=tkinter.NORMAL, command=mydata)
-    button3.grid(row=5, column=5, padx=5, pady=1)
+    button1 = tkinter.Button(frame3, text='Calling', overrelief='solid', height=2, width=7, font=fontStyle, state=tkinter.NORMAL, command=calling)
+    button1.grid(row=0, column=1, padx=3, pady=18)
+    button2 = tkinter.Button(frame3, text='Facial', overrelief='solid', height=2, width=7, font=fontStyle, state=tkinter.NORMAL, command=facial)
+    button2.grid(row=0, column=2, padx=3)
+    button3 = tkinter.Button(frame3, text='MYDATA', overrelief='solid', height=2, width=7, font=fontStyle, state=tkinter.NORMAL, command=mydata)
+    button3.grid(row=0, column=3, padx=3)
 
     window.mainloop()
