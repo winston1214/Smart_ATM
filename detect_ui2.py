@@ -188,7 +188,13 @@ def calling(): #UI
 
     callingswitch = True
     facialswitch = False
+
+    flow = PhotoImage(file="./flow2_1630x206.png")
+    flowlabel.configure(image=flow)
+    flowlabel.image = flow
+
     playvideo()
+
     button1['state'] = tkinter.DISABLED
     button2['state'] = tkinter.DISABLED
     button3['state'] = tkinter.DISABLED
@@ -201,6 +207,11 @@ def facial(): #UI
     callingswitch = False
     facialswitch = True
     govideo = True
+
+    flow = PhotoImage(file="./flow3_1630x206.png")
+    flowlabel.configure(image=flow)
+    flowlabel.image = flow
+
     button2['state'] = tkinter.DISABLED
 
 def mydata(): #UI
@@ -215,6 +226,11 @@ def mydata(): #UI
     mydataswitch = True
     danger_count = 0
     govideo = True
+
+    flow = PhotoImage(file="./flow4_1630x206.png")
+    flowlabel.configure(image=flow)
+    flowlabel.image = flow
+
     button3['state'] = tkinter.DISABLED
 
 def watcher(): #UI
@@ -409,7 +425,7 @@ def run(id=101,
     calling_weights = 0
     calling = False
     face_weights = 0
-    face_cls = ['Normal','Danger','test']
+    face_cls = ['Normal','Danger']
     mydata_weights = 0
     danger_count = 0
     danger_facial = 0
@@ -776,7 +792,7 @@ if __name__ == "__main__":
     datalabel = tkinter.Label(frame4, image=data)
     datalabel.grid(row=0, column=0, padx=10, pady=5)
 
-    flow = PhotoImage(file="./flow1630x206.png")
+    flow = PhotoImage(file="./flow1_1630x206.png")
     flowlabel = tkinter.Label(frame5, image=flow)
     flowlabel.grid(row=0, column=0, padx=5)
 
