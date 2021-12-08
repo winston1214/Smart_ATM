@@ -1,5 +1,9 @@
 # Smart_ATM
 
+<p align='center'>
+  <b>We won the grand prize at the AI hub competition!🥇</b>
+</p>
+
 ## Description
 
 We propose a **Smart ATM model** that can prevent voice phishing face-to-face defraudation damage in ATMs.
