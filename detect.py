@@ -230,14 +230,14 @@ def run(id=101,
         model(torch.zeros(1, 3, *imgsz).to(device).type_as(next(model.model.parameters())))  # warmup
     dt, seen = [0.0, 0.0, 0.0], 0
     # facial recognition
-    if 'jm' in source or 'ym' in source:
-        print('ym')
-        face_model = Facial_model3().to(device)
-        facial_weights_file = 'weights/tmp1.pt'
-        face_model.load_state_dict(torch.load(facial_weights_file))
-    if 'yk' in source or 'dj' in source:
-        face_model = Facial_model2().to(device)
-        face_model.load_state_dict(torch.load(facial_weights_file))
+    # if 'jm' in source or 'ym' in source:
+    #     print('ym')
+    #     face_model = Facial_model3().to(device)
+    #     facial_weights_file = 'weights/tmp1.pt'
+    #     face_model.load_state_dict(torch.load(facial_weights_file))
+    # if 'yk' in source or 'dj' in source:
+    face_model = Facial_model2().to(device)
+    face_model.load_state_dict(torch.load(facial_weights_file))
     call_check = 0
     call_hand = []
     call_hand_loc = ''
