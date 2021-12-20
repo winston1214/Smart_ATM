@@ -18,6 +18,8 @@ We propose a **Smart ATM model** that can prevent voice phishing face-to-face de
 
 More detailed description can be found through <a href='https://github.com/winston1214/project/blob/master/AI_HUB_IDEA_CONTEST2021/(Public)%20%EC%84%9C%EB%B9%84%EC%8A%A4%20%EA%B3%B5%EB%AA%A8%EC%A0%84%20%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4%20%EA%B8%B0%ED%9A%8D%EC%84%9C_%ED%94%BC%EC%8B%B1%20%ED%97%8C%ED%84%B0.pdf'>this link</a>
 
+**Our short paper** : <a href='https://github.com/winston1214/Smart_ATM/blob/master/paper/%EC%98%81%EC%83%81%20%EA%B8%B0%EB%B0%98%20%EB%8C%80%EB%A9%B4%ED%8E%B8%EC%B7%A8%20%EB%B3%B4%EC%9D%B4%EC%8A%A4%ED%94%BC%EC%8B%B1%20%ED%94%BC%ED%95%B4%EC%98%88%EB%B0%A9%20%EB%B0%A9%EB%B2%95%20%EC%97%B0%EA%B5%AC.pdf'>link</a>
+
 ## Member(Pishing Hunter)
 
 <table>
