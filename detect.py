@@ -24,7 +24,7 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
                            increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
-from facial_recognition.facial_model2 import Facial_model2
+from facial_recognition.facial_model2 import Facial_model2 # 표정 분류
 from facial_recognition.facial_model3 import Facial_model3
 
 
@@ -237,7 +237,7 @@ def run(id=101,
     #     face_model.load_state_dict(torch.load(facial_weights_file))
     # if 'yk' in source or 'dj' in source:
     face_model = Facial_model2().to(device)
-    face_model.load_state_dict(torch.load(facial_weights_file))
+    face_model.load_state_dict(torch.load(facial_weights_file)) # model load
     call_check = 0
     call_hand = []
     call_hand_loc = ''
@@ -334,7 +334,7 @@ def run(id=101,
 
                     
 
-                
+                # mask 상태로 전화할 때 전화 탐지
                 if ('mask' in label_ls and 'hand' in label_ls): # check call
                     
                     hand_xyxy = list(filter(lambda x: x[-1] == 'hand',frame_ls))
@@ -375,7 +375,7 @@ def run(id=101,
                                 calling = True
                         
                             
-
+                # 마스크 없이 전화할 때
                 elif ('face' in label_ls and 'hand' in label_ls):
                     
                     hand_xyxy = list(filter(lambda x: x[-1] == 'hand',frame_ls))
@@ -421,11 +421,11 @@ def run(id=101,
                         image_swap = np.swapaxes(face_crop, 0,2)
                         image_swap = np.expand_dims(image_swap, axis=0)
                         tensor = torch.from_numpy(image_swap).type(torch.FloatTensor).to(device)
-                        face_model.eval()
-                        output = F.softmax(face_model(tensor))
+                        face_model.eval() 
+                        output = F.softmax(face_model(tensor)) 
                         output = output.cpu().detach().numpy().flatten()
 
-                        pred_emotion = face_cls[np.argmax(output)]
+                        pred_emotion = face_cls[np.argmax(output)] # 표정 예측
                         print(pred_emotion)
                         
                         if pred_emotion == 'Danger':
