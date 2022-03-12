@@ -94,7 +94,9 @@ This is the same as **yolov5** method.
 
 <img src='https://github.com/winston1214/Smart_ATM/blob/master/facial_recognition/val%20accuracy.png?raw=true' width="70%" height="70%"></img>
 
-## Output
-<p align="center">
-<img src='https://github.com/winston1214/Smart_ATM/blob/master/picture/demo.gif?raw=true'></img>
-</p>
+
+
+# Output
+
+
+https://user-images.githubusercontent.com/47775179/158022258-9a890065-a340-4950-9aab-acb0b98ec105.mov
