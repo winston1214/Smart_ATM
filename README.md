@@ -99,4 +99,9 @@ This is the same as **yolov5** method.
 # Output
 
 
-https://user-images.githubusercontent.com/47775179/158022258-9a890065-a340-4950-9aab-acb0b98ec105.mov
+
+
+https://user-images.githubusercontent.com/47775179/158022524-9f2b6368-847f-424a-99fb-7e8d29cbad95.mp4
+
+
+if you don't watch a output video, you should click <a href='https://github.com/winston1214/Smart_ATM/blob/master/picture/demo.gif'>here</a> to watch output video
