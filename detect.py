@@ -171,7 +171,7 @@ def run(id=101,
         conf_thres=0.25,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
-        device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+        device='cpu',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         view_img=False,  # show results
         save_txt=False,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
@@ -237,7 +237,7 @@ def run(id=101,
     #     face_model.load_state_dict(torch.load(facial_weights_file))
     # if 'yk' in source or 'dj' in source:
     face_model = Facial_model2().to(device)
-    face_model.load_state_dict(torch.load(facial_weights_file)) # model load
+    face_model.load_state_dict(torch.load(facial_weights_file, map_location=torch.device('cpu'))) # model load
     call_check = 0
     call_hand = []
     call_hand_loc = ''
@@ -399,40 +399,51 @@ def run(id=101,
                             hand_left_x = sorted(hand_left_x)[-1]
                             hand_right_x = sorted(hand_right_x)[-1]
 
-                    if face_left_x > hand_left_x : # 영상 왼쪽에서 전화 받음
-                        call_hand.append('left')
-                        if face_left_x <= hand_right_x <= face_right_x:
-                            call_check += 1
-                            if call_check >= 20:
-                                cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                                calling_weights = 0.3
-                                calling = True
-                    if face_right_x < hand_right_x:
-                        call_hand.append('right')
-                        if face_left_x <= hand_left_x <= face_right_x:
-                            call_check += 1
-                            if call_check >= 20:
-                                cv2.putText(im0,'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-                                calling_weights = 0.3
-                                calling = True
-                    if calling:
-                        
-                        face_crop = cv2.resize(face_crop, dsize=(482,482),interpolation=cv2.INTER_LINEAR)
-                        image_swap = np.swapaxes(face_crop, 0,2)
-                        image_swap = np.expand_dims(image_swap, axis=0)
-                        tensor = torch.from_numpy(image_swap).type(torch.FloatTensor).to(device)
-                        face_model.eval() 
-                        output = F.softmax(face_model(tensor)) 
-                        output = output.cpu().detach().numpy().flatten()
+                    try: 
+                        if face_left_x > hand_left_x : # 영상 왼쪽에서 전화 받음
+                            call_hand.append('left')
+                            if face_left_x <= hand_right_x <= face_right_x:
+                                call_check += 1
+                                if call_check >= 20:
+                                    cv2.putText(im0, 'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                    calling_weights = 0.3
+                                    calling = True
+                    except:
+                        pass
+                    
+                    try: 
+                        if face_right_x < hand_right_x:
+                            call_hand.append('right')
+                            if face_left_x <= hand_left_x <= face_right_x:
+                                call_check += 1
+                                if call_check >= 20:
+                                    cv2.putText(im0,'Calling', (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+                                    calling_weights = 0.3
+                                    calling = True
+                    except:
+                        pass 
+                    
+                    try: 
+                        if calling:
+                            
+                            face_crop = cv2.resize(face_crop, dsize=(482,482),interpolation=cv2.INTER_LINEAR)
+                            image_swap = np.swapaxes(face_crop, 0,2)
+                            image_swap = np.expand_dims(image_swap, axis=0)
+                            tensor = torch.from_numpy(image_swap).type(torch.FloatTensor).to(device)
+                            face_model.eval() 
+                            output = F.softmax(face_model(tensor)) 
+                            output = output.cpu().detach().numpy().flatten()
 
-                        pred_emotion = face_cls[np.argmax(output)] # 표정 예측
-                        print(pred_emotion)
-                        
-                        if pred_emotion == 'Danger':
-                            face_weights = output[1]*0.3 # 표정 가중치
-                        else:
-                            face_weights = output[1]*0.1
-                        cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2) 
+                            pred_emotion = face_cls[np.argmax(output)] # 표정 예측
+                            print(pred_emotion)
+                            
+                            if pred_emotion == 'Danger':
+                                face_weights = output[1]*0.3 # 표정 가중치
+                            else:
+                                face_weights = output[1]*0.1
+                            cv2.putText(im0,f'{pred_emotion}',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2) 
+                    except:
+                        pass
                         
                         #if danger_facial > 10:
                             # cv2.putText(im0,'danger',(100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
