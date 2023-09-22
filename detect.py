@@ -559,6 +559,8 @@ def main(opt):
 
 
 if __name__ == "__main__":
+    user_id = input("ID : ")
+    user_pw = input("🔒 : ")
     opt = parse_opt()
     id = opt.id
     main(opt)
