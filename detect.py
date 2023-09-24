@@ -9,6 +9,8 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import pandas as pd
 import warnings
+from util import *
+
 warnings.filterwarnings('ignore')
 import tkinter as tk
 
@@ -554,13 +556,15 @@ def parse_opt():
 
 
 def main(opt):
-    check_requirements(exclude=('tensorboard', 'thop'))
-    run(**vars(opt))
-
+    login = Log_IN()
+    if login.login_with_attempts():
+        check_requirements(exclude=('tensorboard', 'thop'))
+        run(**vars(opt))
+        
+    
+    
 
 if __name__ == "__main__":
-    user_id = input("ID : ")
-    user_pw = input("🔒 : ")
     opt = parse_opt()
     id = opt.id
     main(opt)
